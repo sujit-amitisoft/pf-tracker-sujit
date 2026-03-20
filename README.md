@@ -29,7 +29,7 @@ mvn spring-boot:run
 
 ### Podman
 
-1. Copy `.env.example` to `.env`.
+1. Use `.env`.
 2. Start the full stack:
 
 ```bash
