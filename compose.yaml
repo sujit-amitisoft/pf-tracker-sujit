@@ -1,0 +1,55 @@
+services:
+  postgres:
+    build:
+      context: ./infra/postgres
+      dockerfile: Containerfile
+    container_name: finance-tracker-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-finance_tracker}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      TZ: UTC
+      PGTZ: UTC
+    command: ["postgres", "-c", "TimeZone=UTC", "-c", "log_timezone=UTC"]
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-finance_tracker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - finance_tracker_postgres:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Containerfile
+    container_name: finance-tracker-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-finance_tracker}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173}
+    ports:
+      - "8080:8080"
+    restart: on-failure
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Containerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: finance-tracker-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  finance_tracker_postgres:
