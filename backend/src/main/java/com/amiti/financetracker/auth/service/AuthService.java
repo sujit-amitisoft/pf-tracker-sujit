@@ -9,15 +9,16 @@ import com.amiti.financetracker.auth.dto.AuthDtos.RegisterRequest;
 import com.amiti.financetracker.auth.dto.AuthDtos.ResetPasswordRequest;
 import com.amiti.financetracker.common.BadRequestException;
 import com.amiti.financetracker.config.AppProperties;
+import com.amiti.financetracker.common.mail.EmailService;
 import com.amiti.financetracker.domain.entity.RefreshTokenEntity;
+import com.amiti.financetracker.domain.entity.PasswordResetTokenEntity;
 import com.amiti.financetracker.domain.entity.UserEntity;
 import com.amiti.financetracker.domain.repository.RefreshTokenRepository;
+import com.amiti.financetracker.domain.repository.PasswordResetTokenRepository;
 import com.amiti.financetracker.domain.repository.UserRepository;
 import com.amiti.financetracker.security.JwtService;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,20 +28,25 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
     private final JwtService jwtService;
     private final AppProperties appProperties;
-    private final Map<String, UUID> passwordResetTokens = new ConcurrentHashMap<>();
 
     public AuthService(
             PasswordEncoder passwordEncoder,
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailService emailService,
             JwtService jwtService,
             AppProperties appProperties
     ) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
         this.jwtService = jwtService;
         this.appProperties = appProperties;
     }
@@ -59,7 +65,7 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        UserEntity user = userRepository.findByEmailIgnoreCase(request.email())
+        UserEntity user = userRepository.findByEmailIgnoreCase(request.email().trim())
                 .orElseThrow(() -> new BadRequestException("Incorrect login details. Please check your email and password."));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadRequestException("Incorrect login details. Please check your email and password.");
@@ -79,22 +85,42 @@ public class AuthService {
     }
 
     public MessageResponse forgotPassword(ForgotPasswordRequest request) {
-        UserEntity user = userRepository.findByEmailIgnoreCase(request.email())
-                .orElseThrow(() -> new BadRequestException("No account found for that email"));
-        String token = UUID.randomUUID().toString();
-        passwordResetTokens.put(token, user.getId());
-        return new MessageResponse("Reset token generated for development: " + token);
+        // Always return the same message to avoid account enumeration.
+        userRepository.findByEmailIgnoreCase(request.email().trim()).ifPresent(user -> {
+            String tokenValue = UUID.randomUUID().toString();
+            PasswordResetTokenEntity token = new PasswordResetTokenEntity();
+            token.setUserId(user.getId());
+            token.setToken(tokenValue);
+            token.setExpiresAt(LocalDateTime.now().plusMinutes(30));
+            token.setUsedAt(null);
+            passwordResetTokenRepository.save(token);
+
+            String link = appProperties.frontendUrl() + "/auth?mode=reset&token=" + tokenValue;
+            String body = "You requested a password reset for Personal Finance Tracker.\n\n" +
+                    "Reset link (valid for 30 minutes):\n" + link + "\n\n" +
+                    "If you didn't request this, you can ignore this email.";
+            try {
+                emailService.send(user.getEmail(), "Reset your password", body);
+            } catch (RuntimeException ex) {
+                // Don't leak details to the client; logs will capture send failures.
+            }
+        });
+        return new MessageResponse("If an account exists for that email, we sent a password reset link.");
     }
 
-    @Transactional
+        @Transactional
     public MessageResponse resetPassword(ResetPasswordRequest request) {
-        UUID userId = passwordResetTokens.remove(request.token());
-        if (userId == null) {
-            throw new BadRequestException("Invalid or expired reset token");
-        }
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new BadRequestException("User not found"));
+        PasswordResetTokenEntity token = passwordResetTokenRepository.findByToken(request.token())
+                .filter(item -> item.getUsedAt() == null)
+                .filter(item -> item.getExpiresAt() != null && item.getExpiresAt().isAfter(LocalDateTime.now()))
+                .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
+
+        UserEntity user = userRepository.findById(token.getUserId()).orElseThrow(() -> new BadRequestException("User not found"));
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+
+        token.setUsedAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(token);
         return new MessageResponse("Password reset complete.");
     }
 
@@ -110,3 +136,6 @@ public class AuthService {
         return new AuthResponse(user.getId(), user.getDisplayName(), user.getEmail(), accessToken.value(), refreshToken.getToken(), accessToken.expiresAt());
     }
 }
+
+
+

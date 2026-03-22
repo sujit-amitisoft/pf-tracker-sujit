@@ -1,8 +1,9 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../../services/api";
 import { setSession } from "../../services/session";
+import { getPreferences, setPreferences, type Preferences } from "../../services/preferences";
 
 type AuthResponse = {
   userId: string;
@@ -16,12 +17,23 @@ type AuthMode = "login" | "register" | "forgot" | "reset";
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>("login");
+  const [theme, setTheme] = useState<Preferences["theme"]>(() => getPreferences().theme);
   const [form, setForm] = useState({ displayName: "", email: "", password: "", resetToken: "", newPassword: "" });
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const resetTokenFromUrl = (searchParams.get("token") ?? "").trim();
+  const modeFromUrl = (searchParams.get("mode") ?? "").trim();
 
+  useEffect(() => {
+    if (modeFromUrl !== "reset" || !resetTokenFromUrl) return;
+    setMode("reset");
+    setForm((current) => ({ ...current, resetToken: resetTokenFromUrl }));
+    setError(null);
+    setMessage(null);
+  }, [modeFromUrl, resetTokenFromUrl]);
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
     if (error) {
@@ -74,11 +86,11 @@ export function AuthPage() {
     : mode === "register"
       ? "Create your personal finance account to start tracking income, expenses, and savings goals."
       : mode === "forgot"
-        ? "Enter your email to generate a password reset token for development."
-        : "Paste the reset token and choose a new password.";
+        ? "Enter your email and we will send a password reset link if the account exists."
+        : "Set a new password using the secure reset link token.";
 
   return (
-    <div className="auth-screen-clean">
+    <div className="auth-screen-clean" data-theme={theme}>
       <div className="auth-clean-shell auth-box-shell">
         <section className={mode === "register" ? "auth-clean-hero auth-box-panel auth-box-panel-signup" : "auth-clean-hero auth-box-panel"}>
           <div key={mode === "register" ? "signup-title" : mode === "login" ? "login-title" : "auth-title"} className="auth-clean-badge auth-clean-badge-plain auth-type-title">Personal Finance Tracker</div>
@@ -88,6 +100,11 @@ export function AuthPage() {
             <button type="button" className="button auth-hero-button" onClick={() => switchMode(mode === "login" ? "register" : "login")}>
               {mode === "login" ? "Register" : "Login"}
             </button>
+            <div className="auth-theme-row">
+              <button type="button" className="button ghost" onClick={() => { setTheme("light"); setPreferences({ ...getPreferences(), theme: "light" }); }}>Light</button>
+              <button type="button" className="button ghost" onClick={() => { setTheme("dark"); setPreferences({ ...getPreferences(), theme: "dark" }); }}>Dark</button>
+              <button type="button" className="button ghost" onClick={() => { setTheme("amoled"); setPreferences({ ...getPreferences(), theme: "amoled" }); }}>AMOLED</button>
+            </div>
           </div>
         </section>
 
@@ -103,7 +120,7 @@ export function AuthPage() {
             {mode === "login" || mode === "register" ? <input className={mode === "register" ? "signup-input" : undefined} placeholder="Password" type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} /> : null}
             {mode === "reset" ? (
               <>
-                <input placeholder="Reset token" value={form.resetToken} onChange={(e) => updateField("resetToken", e.target.value)} />
+                {resetTokenFromUrl ? null : <input placeholder="Reset token" value={form.resetToken} onChange={(e) => updateField("resetToken", e.target.value)} />}
                 <input placeholder="New password" type="password" value={form.newPassword} onChange={(e) => updateField("newPassword", e.target.value)} />
               </>
             ) : null}
@@ -111,7 +128,7 @@ export function AuthPage() {
             {message ? <p className="form-message">{message}</p> : null}
             {error ? <p className="form-error">{error}</p> : null}
             <button type="submit" className={mode === "register" ? "button primary auth-submit auth-submit-strong auth-submit-signup" : "button primary auth-submit auth-submit-strong"} disabled={loading}>
-              {loading ? "Working..." : mode === "login" ? "Log In" : mode === "register" ? "Create Account" : mode === "forgot" ? "Generate Token" : "Reset Password"}
+              {loading ? "Working..." : mode === "login" ? "Log In" : mode === "register" ? "Create Account" : mode === "forgot" ? "Send Reset Link" : "Reset Password"}
             </button>
             <div className="auth-link-grid">
               {mode === "login" ? <button type="button" className="auth-switch-link" onClick={() => switchMode("forgot")}>Forgot password?</button> : null}
@@ -124,3 +141,9 @@ export function AuthPage() {
     </div>
   );
 }
+
+
+
+
+
+

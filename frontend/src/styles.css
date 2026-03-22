@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --font-stack: "Segoe UI", "Trebuchet MS", sans-serif;
 }
 
@@ -7933,4 +7933,1404 @@ button {
 
 .profile-drawer .drawer-footer-actions {
   margin-top: auto;
+}
+
+/* === UI density + responsiveness additions === */
+html {
+  font-size: 15px;
+}
+
+.button {
+  padding: 10px 16px;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+.icon-button.quiet {
+  width: 34px;
+  height: 34px;
+}
+
+.search,
+.form-grid input,
+.form-grid select,
+.clean-form-grid input,
+.clean-form-grid select {
+  padding: 10px 14px;
+}
+
+.glass-panel {
+  padding: 18px;
+}
+
+@media (max-width: 960px) {
+  html {
+    font-size: 14.5px;
+  }
+}
+
+/* === Auth AMOLED support === */
+.auth-screen-clean[data-theme="amoled"] {
+  background: #000;
+}
+
+.auth-screen-clean[data-theme="amoled"] .auth-clean-shell,
+.auth-screen-clean[data-theme="amoled"] .auth-clean-form,
+.auth-screen-clean[data-theme="amoled"] .auth-clean-hero {
+  background: rgba(10, 10, 14, 0.72);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.auth-screen-clean[data-theme="amoled"] .clean-form-grid input,
+.auth-screen-clean[data-theme="amoled"] .clean-form-grid select {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* === Sidebar drawer (mobile/tablet) === */
+.sidebar-backdrop {
+  display: none;
+}
+
+.hamburger-button {
+  display: none;
+  position: relative;
+  border-radius: 14px;
+}
+
+.hamburger-button::before,
+.hamburger-button::after {
+  content: "";
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  height: 2px;
+  border-radius: 99px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.hamburger-button::before {
+  top: 13px;
+  box-shadow: 0 6px 0 currentColor;
+}
+
+.hamburger-button::after {
+  top: 25px;
+}
+
+@media (max-width: 960px) {
+  .hamburger-button {
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .sidebar-backdrop.open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 28;
+  }
+
+  .sidebar.sidebar-drawer {
+    position: fixed;
+    top: 14px;
+    bottom: 14px;
+    left: 14px;
+    width: min(320px, calc(100vw - 28px));
+    transform: translateX(calc(-100% - 24px));
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 29;
+  }
+
+  .sidebar.sidebar-drawer.open {
+    transform: translateX(0);
+  }
+
+  .shell.shell-structured {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Search sections === */
+.search-section-title {
+  padding: 10px 14px 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.search-result-nav span {
+  color: var(--muted);
+}
+
+/* === Notification popups (top-right) === */
+.notification-popups {
+  position: fixed;
+  top: 86px;
+  right: 20px;
+  z-index: 85;
+  display: grid;
+  gap: 10px;
+  width: min(380px, calc(100vw - 32px));
+}
+
+.notification-popup {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.app-frame[data-theme="dark"] .notification-popup,
+.app-frame[data-theme="amoled"] .notification-popup {
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
+}
+
+.notification-popup strong {
+  display: block;
+  text-transform: capitalize;
+  margin-bottom: 4px;
+}
+
+.notification-popup p {
+  margin: 0;
+  color: inherit;
+  opacity: 0.82;
+  line-height: 1.35;
+}
+
+.notification-popup .popup-close {
+  margin-top: 2px;
+}
+
+.popup-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-2));
+  transform-origin: left center;
+  animation: popupProgress 4.2s linear forwards;
+}
+
+.notification-popup.warning .popup-progress,
+.notification-popup.danger .popup-progress {
+  background: linear-gradient(90deg, var(--warning), var(--danger));
+}
+
+.notification-popup.success .popup-progress {
+  background: linear-gradient(90deg, var(--success), var(--primary));
+}
+
+@keyframes popupProgress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+/* === Reports header export buttons === */
+.reports-head {
+  align-items: center;
+}
+
+.reports-export-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.reports-export-button {
+  min-width: 120px;
+}
+
+@media (max-width: 720px) {
+  .reports-export-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* === Profile edit modal + avatar === */
+.avatar-image {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.avatar-image-large {
+  width: 56px;
+  height: 56px;
+}
+
+.avatar-image-xl {
+  width: 76px;
+  height: 76px;
+}
+
+.avatar-xl {
+  width: 76px;
+  height: 76px;
+  font-size: 1.25rem;
+}
+
+.profile-edit-avatar-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.profile-edit-avatar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profile-upload-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-upload-button input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.profile-drawer .preference-card {
+  padding: 12px 14px;
+}
+
+.profile-drawer .preference-card strong {
+  font-size: 0.95rem;
+}
+
+.profile-drawer .preference-card span {
+  font-size: 0.84rem;
+}
+
+/* Final tablet/mobile shell override */
+@media (max-width: 1100px) {
+  .shell.shell-structured {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  .sidebar.sidebar-drawer {
+    position: fixed !important;
+    top: 12px !important;
+    bottom: 12px !important;
+    left: 12px !important;
+    width: min(320px, calc(100vw - 24px)) !important;
+    max-height: calc(100vh - 24px) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    transform: translateX(calc(-100% - 24px)) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: 60 !important;
+  }
+
+  .sidebar.sidebar-drawer.open {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .sidebar-backdrop.open {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.24) !important;
+    z-index: 58 !important;
+  }
+
+  .main {
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100vh - 28px) !important;
+    overflow: visible !important;
+  }
+
+  .page-enter {
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+
+  .hamburger-button {
+    display: inline-grid !important;
+    place-items: center;
+  }
+
+  .topbar-structured {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 18 !important;
+  }
+
+  .topbar-structured .topbar-actions {
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+  }
+
+  .topbar-actions .search-box {
+    order: 3;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Final theme override for dark and AMOLED fields/modals */
+.app-frame[data-theme="dark"] .solid-modal-card,
+.app-frame[data-theme="amoled"] .solid-modal-card,
+.app-frame[data-theme="dark"] .transaction-dialog-card,
+.app-frame[data-theme="amoled"] .transaction-dialog-card,
+.app-frame[data-theme="dark"] .account-dialog-card,
+.app-frame[data-theme="amoled"] .account-dialog-card,
+.app-frame[data-theme="dark"] .profile-edit-modal,
+.app-frame[data-theme="amoled"] .profile-edit-modal {
+  background: rgba(12, 17, 28, 0.98) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+.app-frame[data-theme="dark"] .solid-modal-card h2,
+.app-frame[data-theme="amoled"] .solid-modal-card h2,
+.app-frame[data-theme="dark"] .solid-modal-card strong,
+.app-frame[data-theme="amoled"] .solid-modal-card strong,
+.app-frame[data-theme="dark"] .solid-modal-card p,
+.app-frame[data-theme="amoled"] .solid-modal-card p {
+  color: #f8fafc !important;
+}
+
+.app-frame[data-theme="dark"] input,
+.app-frame[data-theme="amoled"] input,
+.app-frame[data-theme="dark"] select,
+.app-frame[data-theme="amoled"] select,
+.app-frame[data-theme="dark"] .app-field-trigger,
+.app-frame[data-theme="amoled"] .app-field-trigger,
+.app-frame[data-theme="dark"] .filter-select-trigger,
+.app-frame[data-theme="amoled"] .filter-select-trigger,
+.app-frame[data-theme="dark"] .app-date-field,
+.app-frame[data-theme="amoled"] .app-date-field {
+  background: rgba(15, 23, 42, 0.96) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.app-frame[data-theme="dark"] input::placeholder,
+.app-frame[data-theme="amoled"] input::placeholder,
+.app-frame[data-theme="dark"] .app-field-trigger span,
+.app-frame[data-theme="amoled"] .app-field-trigger span,
+.app-frame[data-theme="dark"] .filter-select-trigger span,
+.app-frame[data-theme="amoled"] .filter-select-trigger span,
+.app-frame[data-theme="dark"] .app-date-placeholder,
+.app-frame[data-theme="amoled"] .app-date-placeholder {
+  color: rgba(226, 232, 240, 0.72) !important;
+}
+
+.app-frame[data-theme="dark"] .app-select-menu,
+.app-frame[data-theme="amoled"] .app-select-menu,
+.app-frame[data-theme="dark"] .filter-select-menu,
+.app-frame[data-theme="amoled"] .filter-select-menu,
+.app-frame[data-theme="dark"] .search-results,
+.app-frame[data-theme="amoled"] .search-results {
+  background: rgba(12, 17, 28, 0.98) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+.app-frame[data-theme="dark"] .filter-select-option,
+.app-frame[data-theme="amoled"] .filter-select-option,
+.app-frame[data-theme="dark"] .search-result,
+.app-frame[data-theme="amoled"] .search-result {
+  color: #f8fafc !important;
+}
+
+.app-frame[data-theme="dark"] .filter-select-option:hover,
+.app-frame[data-theme="amoled"] .filter-select-option:hover,
+.app-frame[data-theme="dark"] .filter-select-option.keyboard-active,
+.app-frame[data-theme="amoled"] .filter-select-option.keyboard-active,
+.app-frame[data-theme="dark"] .search-result:hover,
+.app-frame[data-theme="amoled"] .search-result:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.profile-actions.drawer-footer-actions {
+  justify-content: flex-end !important;
+}
+
+.reports-export-button.button.primary {
+  color: #ffffff !important;
+}
+
+@media (max-width: 1100px) {
+  .sidebar.sidebar-drawer {
+    display: none !important;
+  }
+
+  .sidebar.sidebar-drawer.open {
+    display: flex !important;
+  }
+
+  .topbar-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .topbar-copy h1 {
+    font-size: 1.9rem !important;
+  }
+
+  .summary-row,
+  .structured-summary-row,
+  .finance-summary-grid,
+  .compact-summary-row,
+  .report-grid,
+  .dashboard-grid,
+  .compact-dashboard-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 820px) {
+  .summary-row,
+  .structured-summary-row,
+  .finance-summary-grid,
+  .compact-summary-row,
+  .report-grid,
+  .dashboard-grid,
+  .compact-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Final responsive header, auth, modal, and progress visibility overrides */
+.topbar-actions {
+  min-width: 0;
+}
+
+.search-box,
+.search-wrap {
+  min-width: 0;
+}
+
+.search-wrap {
+  display: block;
+}
+
+.search {
+  min-width: 0;
+}
+
+.progress-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 0.74rem;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.progress-caption span:nth-child(2) {
+  text-align: center;
+  color: var(--text-soft, var(--text));
+  font-weight: 600;
+}
+
+.report-bar-stack {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.meter,
+.category-spend-meter,
+.trend-bar,
+.mini-bar {
+  background: rgba(148, 163, 184, 0.22) !important;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.app-frame[data-theme="dark"] .meter,
+.app-frame[data-theme="amoled"] .meter,
+.app-frame[data-theme="dark"] .category-spend-meter,
+.app-frame[data-theme="amoled"] .category-spend-meter,
+.app-frame[data-theme="dark"] .trend-bar,
+.app-frame[data-theme="amoled"] .trend-bar,
+.app-frame[data-theme="dark"] .mini-bar,
+.app-frame[data-theme="amoled"] .mini-bar {
+  background: rgba(51, 65, 85, 0.72) !important;
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.auth-screen-clean[data-theme="dark"] .auth-clean-shell,
+.auth-screen-clean[data-theme="amoled"] .auth-clean-shell,
+.auth-screen-clean[data-theme="dark"] .auth-clean-form,
+.auth-screen-clean[data-theme="amoled"] .auth-clean-form,
+.auth-screen-clean[data-theme="dark"] .auth-box-form,
+.auth-screen-clean[data-theme="amoled"] .auth-box-form {
+  background: rgba(10, 16, 28, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+}
+
+.auth-screen-clean[data-theme="amoled"] .auth-clean-shell,
+.auth-screen-clean[data-theme="amoled"] .auth-clean-form,
+.auth-screen-clean[data-theme="amoled"] .auth-box-form {
+  background: rgba(3, 6, 12, 0.98) !important;
+}
+
+.auth-screen-clean[data-theme="dark"] .auth-form-header h2,
+.auth-screen-clean[data-theme="amoled"] .auth-form-header h2,
+.auth-screen-clean[data-theme="dark"] .auth-form-header p,
+.auth-screen-clean[data-theme="amoled"] .auth-form-header p,
+.auth-screen-clean[data-theme="dark"] .auth-switch-link,
+.auth-screen-clean[data-theme="amoled"] .auth-switch-link,
+.auth-screen-clean[data-theme="dark"] .signup-hint,
+.auth-screen-clean[data-theme="amoled"] .signup-hint,
+.auth-screen-clean[data-theme="dark"] .form-message,
+.auth-screen-clean[data-theme="amoled"] .form-message {
+  color: #dbe7fb !important;
+}
+
+.auth-screen-clean[data-theme="dark"] .clean-form-grid input,
+.auth-screen-clean[data-theme="amoled"] .clean-form-grid input,
+.auth-screen-clean[data-theme="dark"] .clean-form-grid select,
+.auth-screen-clean[data-theme="amoled"] .clean-form-grid select {
+  background: rgba(15, 23, 42, 0.96) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.auth-screen-clean[data-theme="dark"] .clean-form-grid input::placeholder,
+.auth-screen-clean[data-theme="amoled"] .clean-form-grid input::placeholder {
+  color: rgba(226, 232, 240, 0.72) !important;
+}
+
+.auth-screen-clean[data-theme="dark"] .auth-theme-row .button,
+.auth-screen-clean[data-theme="amoled"] .auth-theme-row .button {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: #f8fafc !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.app-frame[data-theme="dark"] .modal-card,
+.app-frame[data-theme="amoled"] .modal-card,
+.app-frame[data-theme="dark"] .solid-modal-card,
+.app-frame[data-theme="amoled"] .solid-modal-card,
+.app-frame[data-theme="dark"] .account-dialog-card,
+.app-frame[data-theme="amoled"] .account-dialog-card,
+.app-frame[data-theme="dark"] .category-dialog-card,
+.app-frame[data-theme="amoled"] .category-dialog-card,
+.app-frame[data-theme="dark"] .transaction-confirm-modal,
+.app-frame[data-theme="amoled"] .transaction-confirm-modal,
+.app-frame[data-theme="dark"] .transaction-form-modal,
+.app-frame[data-theme="amoled"] .transaction-form-modal {
+  background: rgba(10, 16, 28, 0.98) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.42) !important;
+}
+
+.app-frame[data-theme="amoled"] .modal-card,
+.app-frame[data-theme="amoled"] .solid-modal-card,
+.app-frame[data-theme="amoled"] .account-dialog-card,
+.app-frame[data-theme="amoled"] .category-dialog-card,
+.app-frame[data-theme="amoled"] .transaction-confirm-modal,
+.app-frame[data-theme="amoled"] .transaction-form-modal {
+  background: rgba(2, 6, 12, 0.99) !important;
+}
+
+.app-frame[data-theme="dark"] .modal-card h2,
+.app-frame[data-theme="amoled"] .modal-card h2,
+.app-frame[data-theme="dark"] .modal-card p,
+.app-frame[data-theme="amoled"] .modal-card p,
+.app-frame[data-theme="dark"] .modal-card strong,
+.app-frame[data-theme="amoled"] .modal-card strong,
+.app-frame[data-theme="dark"] .modal-card label,
+.app-frame[data-theme="amoled"] .modal-card label,
+.app-frame[data-theme="dark"] .delete-confirm-copy,
+.app-frame[data-theme="amoled"] .delete-confirm-copy {
+  color: #f8fafc !important;
+}
+
+.app-frame[data-theme="dark"] .modal-card input,
+.app-frame[data-theme="amoled"] .modal-card input,
+.app-frame[data-theme="dark"] .modal-card .app-field-trigger,
+.app-frame[data-theme="amoled"] .modal-card .app-field-trigger,
+.app-frame[data-theme="dark"] .modal-card .filter-select-trigger,
+.app-frame[data-theme="amoled"] .modal-card .filter-select-trigger,
+.app-frame[data-theme="dark"] .modal-card .app-date-field,
+.app-frame[data-theme="amoled"] .modal-card .app-date-field,
+.app-frame[data-theme="dark"] .reports-filters .app-field-trigger,
+.app-frame[data-theme="amoled"] .reports-filters .app-field-trigger,
+.app-frame[data-theme="dark"] .reports-filters input,
+.app-frame[data-theme="amoled"] .reports-filters input,
+.app-frame[data-theme="dark"] .reports-filters .app-date-field,
+.app-frame[data-theme="amoled"] .reports-filters .app-date-field {
+  background: rgba(15, 23, 42, 0.96) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.app-frame[data-theme="amoled"] .modal-card input,
+.app-frame[data-theme="amoled"] .modal-card .app-field-trigger,
+.app-frame[data-theme="amoled"] .modal-card .filter-select-trigger,
+.app-frame[data-theme="amoled"] .modal-card .app-date-field,
+.app-frame[data-theme="amoled"] .reports-filters .app-field-trigger,
+.app-frame[data-theme="amoled"] .reports-filters input,
+.app-frame[data-theme="amoled"] .reports-filters .app-date-field {
+  background: rgba(5, 10, 18, 0.98) !important;
+}
+
+.app-frame[data-theme="dark"] .modal-card input::placeholder,
+.app-frame[data-theme="amoled"] .modal-card input::placeholder,
+.app-frame[data-theme="dark"] .modal-card .app-field-trigger span,
+.app-frame[data-theme="amoled"] .modal-card .app-field-trigger span,
+.app-frame[data-theme="dark"] .reports-filters .app-field-trigger span,
+.app-frame[data-theme="amoled"] .reports-filters .app-field-trigger span,
+.app-frame[data-theme="dark"] .reports-filters input::placeholder,
+.app-frame[data-theme="amoled"] .reports-filters input::placeholder,
+.app-frame[data-theme="dark"] .app-date-placeholder,
+.app-frame[data-theme="amoled"] .app-date-placeholder {
+  color: rgba(226, 232, 240, 0.74) !important;
+}
+
+.app-frame[data-theme="dark"] .modal-card .close-icon-button,
+.app-frame[data-theme="amoled"] .modal-card .close-icon-button {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+@media (max-width: 1100px) {
+  .topbar-structured {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .topbar-copy {
+    min-width: 0;
+  }
+
+  .topbar-actions {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto auto !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .topbar-actions .hamburger-button {
+    order: 1;
+  }
+
+  .topbar-actions .search-box {
+    order: 2;
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .topbar-actions > .icon-button:not(.hamburger-button) {
+    order: 3;
+  }
+
+  .topbar-actions > .avatar-button {
+    order: 4;
+  }
+
+  .topbar-actions .search-wrap,
+  .topbar-actions .search {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .topbar-actions .search-box,
+  .topbar-actions .search-results {
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar-copy h1 {
+    font-size: 1.55rem !important;
+  }
+
+  .topbar-actions {
+    grid-template-columns: auto minmax(0, 1fr) auto auto !important;
+  }
+
+  .topbar-actions > .avatar-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .topbar-actions > .icon-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* Targeted dark/AMOLED fixes for account/category/archive modals */
+.app-frame[data-theme="dark"] .account-dialog-card,
+.app-frame[data-theme="amoled"] .account-dialog-card,
+.app-frame[data-theme="dark"] .category-dialog-card,
+.app-frame[data-theme="amoled"] .category-dialog-card,
+.app-frame[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal {
+  background: rgba(10, 16, 28, 0.99) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.app-frame[data-theme="amoled"] .account-dialog-card,
+.app-frame[data-theme="amoled"] .category-dialog-card,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal {
+  background: rgba(2, 6, 12, 0.995) !important;
+}
+
+.app-frame[data-theme="dark"] .account-dialog-card::before,
+.app-frame[data-theme="amoled"] .account-dialog-card::before,
+.app-frame[data-theme="dark"] .category-dialog-card::before,
+.app-frame[data-theme="amoled"] .category-dialog-card::before,
+.app-frame[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal::before,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal::before {
+  background: transparent !important;
+}
+
+.app-frame[data-theme="dark"] .account-dialog-card h2,
+.app-frame[data-theme="amoled"] .account-dialog-card h2,
+.app-frame[data-theme="dark"] .account-dialog-card p,
+.app-frame[data-theme="amoled"] .account-dialog-card p,
+.app-frame[data-theme="dark"] .account-dialog-card strong,
+.app-frame[data-theme="amoled"] .account-dialog-card strong,
+.app-frame[data-theme="dark"] .category-dialog-card h2,
+.app-frame[data-theme="amoled"] .category-dialog-card h2,
+.app-frame[data-theme="dark"] .category-dialog-card p,
+.app-frame[data-theme="amoled"] .category-dialog-card p,
+.app-frame[data-theme="dark"] .category-dialog-card strong,
+.app-frame[data-theme="amoled"] .category-dialog-card strong,
+.app-frame[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal h2,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal h2,
+.app-frame[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal p,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal p,
+.app-frame[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal strong,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal strong,
+.app-frame[data-theme="dark"] .category-color-field-copy p,
+.app-frame[data-theme="amoled"] .category-color-field-copy p,
+.app-frame[data-theme="dark"] .delete-confirm-copy p,
+.app-frame[data-theme="amoled"] .delete-confirm-copy p {
+  color: #f8fafc !important;
+}
+
+.app-frame[data-theme="dark"] .account-dialog-card .form-grid input,
+.app-frame[data-theme="amoled"] .account-dialog-card .form-grid input,
+.app-frame[data-theme="dark"] .category-dialog-card .form-grid input,
+.app-frame[data-theme="amoled"] .category-dialog-card .form-grid input,
+.app-frame[data-theme="dark"] .account-dialog-card .app-field-trigger,
+.app-frame[data-theme="amoled"] .account-dialog-card .app-field-trigger,
+.app-frame[data-theme="dark"] .category-dialog-card .app-field-trigger,
+.app-frame[data-theme="amoled"] .category-dialog-card .app-field-trigger,
+.app-frame[data-theme="dark"] .account-dialog-card .filter-select-trigger,
+.app-frame[data-theme="amoled"] .account-dialog-card .filter-select-trigger,
+.app-frame[data-theme="dark"] .category-dialog-card .filter-select-trigger,
+.app-frame[data-theme="amoled"] .category-dialog-card .filter-select-trigger,
+.app-frame[data-theme="dark"] .account-dialog-card .app-date-field,
+.app-frame[data-theme="amoled"] .account-dialog-card .app-date-field,
+.app-frame[data-theme="dark"] .category-dialog-card .app-date-field,
+.app-frame[data-theme="amoled"] .category-dialog-card .app-date-field {
+  background: rgba(15, 23, 42, 0.98) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+.app-frame[data-theme="amoled"] .account-dialog-card .form-grid input,
+.app-frame[data-theme="amoled"] .category-dialog-card .form-grid input,
+.app-frame[data-theme="amoled"] .account-dialog-card .app-field-trigger,
+.app-frame[data-theme="amoled"] .category-dialog-card .app-field-trigger,
+.app-frame[data-theme="amoled"] .account-dialog-card .filter-select-trigger,
+.app-frame[data-theme="amoled"] .category-dialog-card .filter-select-trigger,
+.app-frame[data-theme="amoled"] .account-dialog-card .app-date-field,
+.app-frame[data-theme="amoled"] .category-dialog-card .app-date-field {
+  background: rgba(4, 9, 16, 0.99) !important;
+}
+
+.app-frame[data-theme="dark"] .account-dialog-card .form-grid input::placeholder,
+.app-frame[data-theme="amoled"] .account-dialog-card .form-grid input::placeholder,
+.app-frame[data-theme="dark"] .category-dialog-card .form-grid input::placeholder,
+.app-frame[data-theme="amoled"] .category-dialog-card .form-grid input::placeholder,
+.app-frame[data-theme="dark"] .account-dialog-card .app-field-trigger span,
+.app-frame[data-theme="amoled"] .account-dialog-card .app-field-trigger span,
+.app-frame[data-theme="dark"] .category-dialog-card .app-field-trigger span,
+.app-frame[data-theme="amoled"] .category-dialog-card .app-field-trigger span,
+.app-frame[data-theme="dark"] .account-dialog-card .filter-select-trigger span,
+.app-frame[data-theme="amoled"] .account-dialog-card .filter-select-trigger span,
+.app-frame[data-theme="dark"] .category-dialog-card .filter-select-trigger span,
+.app-frame[data-theme="amoled"] .category-dialog-card .filter-select-trigger span {
+  color: rgba(226, 232, 240, 0.76) !important;
+}
+
+.app-frame[data-theme="dark"] .account-dialog-card .button.ghost,
+.app-frame[data-theme="amoled"] .account-dialog-card .button.ghost,
+.app-frame[data-theme="dark"] .category-dialog-card .button.ghost,
+.app-frame[data-theme="amoled"] .category-dialog-card .button.ghost,
+.app-frame[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal .button.ghost,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .button.ghost {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.app-frame[data-theme="dark"] .account-dialog-card .close-icon-button,
+.app-frame[data-theme="amoled"] .account-dialog-card .close-icon-button,
+.app-frame[data-theme="dark"] .category-dialog-card .close-icon-button,
+.app-frame[data-theme="amoled"] .category-dialog-card .close-icon-button,
+.app-frame[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal .close-icon-button,
+.app-frame[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .close-icon-button {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.app-frame[data-theme="dark"] .category-selected-color-chip,
+.app-frame[data-theme="amoled"] .category-selected-color-chip,
+.app-frame[data-theme="dark"] .category-color-field,
+.app-frame[data-theme="amoled"] .category-color-field {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Portal modal theme fix: modals render under document.body, outside .app-frame */
+html[data-theme="dark"] .account-dialog-card,
+html[data-theme="amoled"] .account-dialog-card,
+html[data-theme="dark"] .category-dialog-card,
+html[data-theme="amoled"] .category-dialog-card,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal {
+  background: rgba(10, 16, 28, 0.99) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.42) !important;
+}
+
+html[data-theme="amoled"] .account-dialog-card,
+html[data-theme="amoled"] .category-dialog-card,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal {
+  background: rgba(2, 6, 12, 0.995) !important;
+}
+
+html[data-theme="dark"] .account-dialog-card::before,
+html[data-theme="amoled"] .account-dialog-card::before,
+html[data-theme="dark"] .category-dialog-card::before,
+html[data-theme="amoled"] .category-dialog-card::before,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal::before,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal::before,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal::before,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal::before {
+  background: transparent !important;
+}
+
+html[data-theme="dark"] .account-dialog-card h2,
+html[data-theme="amoled"] .account-dialog-card h2,
+html[data-theme="dark"] .account-dialog-card p,
+html[data-theme="amoled"] .account-dialog-card p,
+html[data-theme="dark"] .account-dialog-card strong,
+html[data-theme="amoled"] .account-dialog-card strong,
+html[data-theme="dark"] .category-dialog-card h2,
+html[data-theme="amoled"] .category-dialog-card h2,
+html[data-theme="dark"] .category-dialog-card p,
+html[data-theme="amoled"] .category-dialog-card p,
+html[data-theme="dark"] .category-dialog-card strong,
+html[data-theme="amoled"] .category-dialog-card strong,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal h2,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal h2,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal p,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal p,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal strong,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal strong,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal h2,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal h2,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal p,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal p,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal strong,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal strong,
+html[data-theme="dark"] .category-color-field-copy p,
+html[data-theme="amoled"] .category-color-field-copy p,
+html[data-theme="dark"] .delete-confirm-copy p,
+html[data-theme="amoled"] .delete-confirm-copy p {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .account-dialog-card .form-grid input,
+html[data-theme="amoled"] .account-dialog-card .form-grid input,
+html[data-theme="dark"] .category-dialog-card .form-grid input,
+html[data-theme="amoled"] .category-dialog-card .form-grid input,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .form-grid input,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .form-grid input,
+html[data-theme="dark"] .account-dialog-card .app-field-trigger,
+html[data-theme="amoled"] .account-dialog-card .app-field-trigger,
+html[data-theme="dark"] .category-dialog-card .app-field-trigger,
+html[data-theme="amoled"] .category-dialog-card .app-field-trigger,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .app-field-trigger,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .app-field-trigger,
+html[data-theme="dark"] .account-dialog-card .filter-select-trigger,
+html[data-theme="amoled"] .account-dialog-card .filter-select-trigger,
+html[data-theme="dark"] .category-dialog-card .filter-select-trigger,
+html[data-theme="amoled"] .category-dialog-card .filter-select-trigger,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .filter-select-trigger,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .filter-select-trigger,
+html[data-theme="dark"] .account-dialog-card .app-date-field,
+html[data-theme="amoled"] .account-dialog-card .app-date-field,
+html[data-theme="dark"] .category-dialog-card .app-date-field,
+html[data-theme="amoled"] .category-dialog-card .app-date-field,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .app-date-field,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .app-date-field {
+  background: rgba(15, 23, 42, 0.98) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="amoled"] .account-dialog-card .form-grid input,
+html[data-theme="amoled"] .category-dialog-card .form-grid input,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .form-grid input,
+html[data-theme="amoled"] .account-dialog-card .app-field-trigger,
+html[data-theme="amoled"] .category-dialog-card .app-field-trigger,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .app-field-trigger,
+html[data-theme="amoled"] .account-dialog-card .filter-select-trigger,
+html[data-theme="amoled"] .category-dialog-card .filter-select-trigger,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .filter-select-trigger,
+html[data-theme="amoled"] .account-dialog-card .app-date-field,
+html[data-theme="amoled"] .category-dialog-card .app-date-field,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .app-date-field {
+  background: rgba(4, 9, 16, 0.99) !important;
+}
+
+html[data-theme="dark"] .account-dialog-card .form-grid input::placeholder,
+html[data-theme="amoled"] .account-dialog-card .form-grid input::placeholder,
+html[data-theme="dark"] .category-dialog-card .form-grid input::placeholder,
+html[data-theme="amoled"] .category-dialog-card .form-grid input::placeholder,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .form-grid input::placeholder,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .form-grid input::placeholder,
+html[data-theme="dark"] .account-dialog-card .app-field-trigger span,
+html[data-theme="amoled"] .account-dialog-card .app-field-trigger span,
+html[data-theme="dark"] .category-dialog-card .app-field-trigger span,
+html[data-theme="amoled"] .category-dialog-card .app-field-trigger span,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .app-field-trigger span,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .app-field-trigger span,
+html[data-theme="dark"] .account-dialog-card .filter-select-trigger span,
+html[data-theme="amoled"] .account-dialog-card .filter-select-trigger span,
+html[data-theme="dark"] .category-dialog-card .filter-select-trigger span,
+html[data-theme="amoled"] .category-dialog-card .filter-select-trigger span,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .filter-select-trigger span,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .filter-select-trigger span,
+html[data-theme="dark"] .account-dialog-card .app-date-placeholder,
+html[data-theme="amoled"] .account-dialog-card .app-date-placeholder,
+html[data-theme="dark"] .category-dialog-card .app-date-placeholder,
+html[data-theme="amoled"] .category-dialog-card .app-date-placeholder,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .app-date-placeholder,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .app-date-placeholder {
+  color: rgba(226, 232, 240, 0.76) !important;
+}
+
+html[data-theme="dark"] .account-dialog-card .button.ghost,
+html[data-theme="amoled"] .account-dialog-card .button.ghost,
+html[data-theme="dark"] .category-dialog-card .button.ghost,
+html[data-theme="amoled"] .category-dialog-card .button.ghost,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal .button.ghost,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .button.ghost,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .button.ghost,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .button.ghost {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .account-dialog-card .close-icon-button,
+html[data-theme="amoled"] .account-dialog-card .close-icon-button,
+html[data-theme="dark"] .category-dialog-card .close-icon-button,
+html[data-theme="amoled"] .category-dialog-card .close-icon-button,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal .close-icon-button,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .close-icon-button,
+html[data-theme="dark"] .transaction-dialog-card.transaction-form-modal .close-icon-button,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-form-modal .close-icon-button {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .category-selected-color-chip,
+html[data-theme="amoled"] .category-selected-color-chip,
+html[data-theme="dark"] .category-color-field,
+html[data-theme="amoled"] .category-color-field {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Final confirm-panel fix for archive/unarchive portal modals */
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal .delete-confirm-copy,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .delete-confirm-copy {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .delete-confirm-copy {
+  background: rgba(5, 10, 18, 0.96) !important;
+}
+
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal .delete-confirm-copy strong,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .delete-confirm-copy strong,
+html[data-theme="dark"] .transaction-dialog-card.transaction-confirm-modal .delete-confirm-copy p,
+html[data-theme="amoled"] .transaction-dialog-card.transaction-confirm-modal .delete-confirm-copy p {
+  color: #f8fafc !important;
+}
+
+/* Search dropdown cleanup */
+.topbar-structured {
+  overflow: visible !important;
+}
+
+.topbar-actions .search-box {
+  position: relative;
+}
+
+.topbar-actions .search-results {
+  left: auto !important;
+  right: 0 !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  z-index: 90 !important;
+}
+
+.search-result {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.search-result > div {
+  min-width: 0;
+}
+
+.search-result span {
+  justify-self: end;
+}
+
+.search-result-nav {
+  grid-template-columns: 1fr !important;
+  align-items: center !important;
+}
+
+.search-result-nav strong {
+  display: block;
+}
+
+.search-result-nav p,
+.search-result-nav span {
+  display: none !important;
+}
+
+.search-results {
+  overflow: hidden;
+}
+
+/* Transactions header wrapper cleanup */
+.transactions-sticky-head {
+  position: static !important;
+  top: auto !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 0 16px !important;
+  z-index: auto !important;
+}
+
+.transactions-list-shell {
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.transactions-table-head-row {
+  flex: 0 0 auto;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.transactions-table-scrollable {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(58vh, 720px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.app-frame[data-theme="dark"] .avatar,
+.app-frame[data-theme="dark"] .avatar-button,
+.app-frame[data-theme="amoled"] .avatar,
+.app-frame[data-theme="amoled"] .avatar-button {
+  color: #ffffff !important;
+}
+
+
+
+
+
+
+/* Static header + scrollable content alignment for budgets, goals, accounts, recurring, and categories */
+.budgets-sticky-head,
+.goals-sticky-head,
+.recurring-sticky-head,
+.categories-sticky-head {
+  position: static !important;
+  top: auto !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 0 16px !important;
+  z-index: auto !important;
+}
+
+.budgets-sticky-layout,
+.goals-sticky-layout,
+.recurring-sticky-layout,
+.categories-sticky-layout,
+.accounts-page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.budgets-table-shell,
+.goals-table-shell,
+.recurring-table-shell,
+.accounts-table-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.budgets-table-scrollable,
+.goals-table-scrollable,
+.recurring-table-scrollable,
+.accounts-table-scrollable,
+.categories-card-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(58vh, 720px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.accounts-table-head-row {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.accounts-table-scrollable .accounts-table-row:first-child {
+  border-top: 0;
+}
+
+@media (max-width: 720px) {
+  .budgets-sticky-layout,
+  .goals-sticky-layout,
+  .recurring-sticky-layout,
+  .categories-sticky-layout,
+  .accounts-page-shell {
+    overflow: visible !important;
+  }
+
+  .budgets-table-shell,
+  .goals-table-shell,
+  .recurring-table-shell,
+  .accounts-table-shell {
+    overflow: visible !important;
+  }
+
+  .budgets-table-scrollable,
+  .goals-table-scrollable,
+  .recurring-table-scrollable,
+  .accounts-table-scrollable,
+  .categories-card-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* Dashboard pie chart labels in dark themes */
+.app-frame[data-theme="dark"] .dashboard-pie-label,
+.app-frame[data-theme="amoled"] .dashboard-pie-label {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Transactions inner-scroll only + taller categories shell */
+@supports selector(.page-enter:has(.transactions-page-shell)) {
+  .page-enter:has(.transactions-page-shell),
+  .page-enter:has(.categories-page-shell) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding-right: 0;
+  }
+}
+
+.transactions-page-shell.transactions-sticky-layout,
+.categories-page-shell.categories-sticky-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.transactions-page-shell.transactions-sticky-layout {
+  max-height: none;
+}
+
+.categories-card-scroll,
+.transactions-list-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (max-width: 720px) {
+  .transactions-page-shell.transactions-sticky-layout,
+  .categories-page-shell.categories-sticky-layout {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+}
+
+
+/* Budgets and Recurring dropdown overflow fix */
+.budgets-sticky-layout,
+.recurring-sticky-layout {
+  overflow: visible !important;
+}
+
+.budgets-sticky-head,
+.recurring-sticky-head,
+.budgets-form-row,
+.recurring-form-row,
+.budgets-form-row .app-select,
+.recurring-form-row .app-select,
+.budgets-form-row .filter-select,
+.recurring-form-row .filter-select {
+  position: relative;
+  z-index: 20;
+}
+
+.budgets-form-row .app-select.open,
+.recurring-form-row .app-select.open,
+.budgets-form-row .filter-select.open,
+.recurring-form-row .filter-select.open {
+  z-index: 80;
+}
+
+.budgets-form-row .filter-select-menu,
+.budgets-form-row .app-select-menu,
+.recurring-form-row .filter-select-menu,
+.recurring-form-row .app-select-menu {
+  z-index: 90 !important;
+}
+
+.budgets-table-shell,
+.recurring-table-shell {
+  position: relative;
+  z-index: 1;
+}
+
+/* Remove outer page shell shadow on all main screens */
+.transactions-page-shell,
+.budgets-page-shell,
+.goals-page-shell,
+.accounts-page-shell,
+.recurring-page-shell,
+.categories-page-shell,
+.reports-page-shell {
+  box-shadow: none !important;
+}
+
+/* Remove remaining outer layout shadows */
+.sidebar,
+.topbar-structured {
+  box-shadow: none !important;
+}
+
+/* Reports outer shell cleanup */
+.reports-page-shell {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Categories list should fill available shell height */
+.categories-page-shell.categories-sticky-layout .categories-card-scroll {
+  height: 100% !important;
+  max-height: none !important;
+}
+
+.settings-grid-spaced {
+  margin-top: 22px;
+}
+
+.nav-icon-wrap {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  flex: 0 0 18px;
+}
+
+.nav-icon {
+  width: 17px;
+  height: 17px;
+  opacity: 0.92;
+}
+
+.nav-text {
+  min-width: 0;
 }

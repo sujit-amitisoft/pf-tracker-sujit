@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../services/api";
@@ -93,15 +93,17 @@ export function AccountsPage() {
           <button className="button primary transactions-add-button" type="button" onClick={openModal}>Add Account</button>
         </div>
         <div className="table-shell accounts-table-shell">
-          <div className="table-row table-head accounts-table-row"><span>Name</span><span>Type</span><span>Institution</span><span>Balance</span></div>
-          {(accounts.data ?? []).map((item) => (
-            <div key={item.id} className="table-row accounts-table-row">
-              <span>{item.name}</span>
-              <span>{item.type.replace(/_/g, " ")}</span>
-              <span>{item.institutionName || "-"}</span>
-              <strong>${item.currentBalance}</strong>
-            </div>
-          ))}
+          <div className="table-row table-head accounts-table-row accounts-table-head-row"><span>Name</span><span>Type</span><span>Institution</span><span>Balance</span></div>
+          <div className="accounts-table-scrollable">
+            {(accounts.data ?? []).map((item) => (
+              <div key={item.id} className="table-row accounts-table-row">
+                <span>{item.name}</span>
+                <span>{item.type.replace(/_/g, " ")}</span>
+                <span>{item.institutionName || "-"}</span>
+                <strong>${item.currentBalance}</strong>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -135,6 +137,7 @@ export function AccountsPage() {
     </>
   );
 }
+
 
 
 

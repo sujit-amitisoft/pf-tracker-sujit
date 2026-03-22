@@ -6,9 +6,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.amiti.financetracker.auth.dto.AuthDtos.RegisterRequest;
+import com.amiti.financetracker.common.mail.EmailService;
 import com.amiti.financetracker.config.AppProperties;
 import com.amiti.financetracker.domain.entity.RefreshTokenEntity;
 import com.amiti.financetracker.domain.entity.UserEntity;
+import com.amiti.financetracker.domain.repository.PasswordResetTokenRepository;
 import com.amiti.financetracker.domain.repository.RefreshTokenRepository;
 import com.amiti.financetracker.domain.repository.UserRepository;
 import com.amiti.financetracker.security.JwtService;
@@ -24,6 +26,9 @@ class AuthServiceTest {
     void registerReturnsTokensAndPersistsUser() {
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         RefreshTokenRepository refreshTokenRepository = Mockito.mock(RefreshTokenRepository.class);
+        PasswordResetTokenRepository passwordResetTokenRepository = Mockito.mock(PasswordResetTokenRepository.class);
+        EmailService emailService = Mockito.mock(EmailService.class);
+
         when(userRepository.findByEmailIgnoreCase("demo@example.com")).thenReturn(Optional.empty());
         when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
@@ -36,6 +41,7 @@ class AuthServiceTest {
 
         AppProperties properties = new AppProperties(
                 "http://localhost:5173",
+                "no-reply@example.com",
                 "http://localhost:5173",
                 new AppProperties.Jwt("change-me-change-me-change-me-change-me", 900000, 2592000000L),
                 new AppProperties.Scheduler(true)
@@ -46,6 +52,8 @@ class AuthServiceTest {
                 new BCryptPasswordEncoder(),
                 userRepository,
                 refreshTokenRepository,
+                passwordResetTokenRepository,
+                emailService,
                 jwtService,
                 properties
         );

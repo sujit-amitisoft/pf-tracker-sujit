@@ -1,9 +1,10 @@
-export type Preferences = {
+﻿export type Preferences = {
   theme: "dark" | "light" | "amoled";
   accent: "teal" | "amber" | "rose" | "sky" | "violet" | "emerald";
   emailNotifications: boolean;
   budgetAlerts: boolean;
   recurringAlerts: boolean;
+  popupNotifications: boolean;
 };
 
 const KEY = "finance_preferences";
@@ -15,6 +16,7 @@ const defaults: Preferences = {
   emailNotifications: false,
   budgetAlerts: true,
   recurringAlerts: true,
+  popupNotifications: true,
 };
 
 export function getPreferences(): Preferences {

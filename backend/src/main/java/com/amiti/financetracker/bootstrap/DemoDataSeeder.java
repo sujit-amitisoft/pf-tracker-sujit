@@ -40,13 +40,13 @@ public class DemoDataSeeder {
     ) {
         return args -> {
             String email = "admin@amiti.local";
-            if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
-                return;
+            UserEntity user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+            if (user == null) {
+                user = new UserEntity();
+                user.setEmail(email);
             }
-
-            UserEntity user = new UserEntity();
-            user.setEmail(email);
             user.setDisplayName("Admin User");
+            // Keep demo login stable across restarts.
             user.setPasswordHash(passwordEncoder.encode("Password1"));
             user = userRepository.save(user);
 
@@ -169,4 +169,5 @@ public class DemoDataSeeder {
         repository.save(entity);
     }
 }
+
 

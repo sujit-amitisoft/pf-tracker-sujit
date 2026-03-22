@@ -17,8 +17,10 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^6.27.0",
-    "zod": "^3.23.8"
-  },
+    "zod": "^3.23.8",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.2"
+},
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
@@ -29,3 +31,5 @@
     "vitest": "^2.1.1"
   }
 }
+
+

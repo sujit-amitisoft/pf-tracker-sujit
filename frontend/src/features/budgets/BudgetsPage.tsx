@@ -76,7 +76,10 @@ export function BudgetsPage() {
           {(budgets.data ?? []).map((item) => (
             <div key={item.id} className="budget-live-row structured-budget-row budgets-table-row">
               <div className="budgets-table-main"><strong>{item.category}</strong><p>{item.actualSpend} / {item.amount}</p></div>
-              <div className="budgets-table-progress"><div className="meter"><span style={{ width: `${Math.min(item.percentUsed, 100)}%` }} /></div></div>
+              <div className="budgets-table-progress">
+                <div className="meter" title={`Spent ${Number(item.actualSpend).toFixed(2)} of ${Number(item.amount).toFixed(2)} (${item.percentUsed}%)`}><span style={{ width: `${Math.min(item.percentUsed, 100)}%` }} /></div>
+                <div className="progress-caption"><span>0%</span><span>${item.actualSpend} / ${item.amount}</span><span>100%</span></div>
+              </div>
               <strong className="budgets-table-percent">{item.percentUsed}%</strong>
             </div>
           ))}

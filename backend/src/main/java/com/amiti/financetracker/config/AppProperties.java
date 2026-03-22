@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app")
 public record AppProperties(
         String frontendUrl,
+        String mailFrom,
         String allowedOrigins,
         Jwt jwt,
         Scheduler scheduler
@@ -15,3 +16,4 @@ public record AppProperties(
     public record Scheduler(boolean recurringEnabled) {
     }
 }
+

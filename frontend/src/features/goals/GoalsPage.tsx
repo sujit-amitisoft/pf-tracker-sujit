@@ -89,7 +89,8 @@ export function GoalsPage() {
                   <span>{item.currentAmount} / {item.targetAmount}</span>
                 </div>
                 <div className="goals-table-progress">
-                  <div className="meter"><span style={{ width: `${item.progressPercent}%` }} /></div>
+                  <div className="meter" title={`Saved $${Number(item.currentAmount).toFixed(2)} of $${Number(item.targetAmount).toFixed(2)} (${item.progressPercent}%)`}><span style={{ width: `${item.progressPercent}%` }} /></div>
+                  <div className="progress-caption"><span>0%</span><span>${item.currentAmount} / ${item.targetAmount}</span><span>100%</span></div>
                   <div className="goal-percent">{item.progressPercent}%</div>
                 </div>
                 <div className="goals-table-due">Due: {item.targetDate || "No date"}</div>

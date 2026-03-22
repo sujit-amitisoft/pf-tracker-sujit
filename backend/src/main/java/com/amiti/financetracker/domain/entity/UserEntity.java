@@ -23,6 +23,16 @@ public class UserEntity {
     @Column(name = "display_name")
     private String displayName;
 
+    @Column(name = "avatar_content_type")
+    private String avatarContentType;
+
+    // Map directly to Postgres `bytea` (avoid OID large-object mapping).
+    @Column(name = "avatar_bytes", columnDefinition = "bytea")
+    private byte[] avatarBytes;
+
+    @Column(name = "avatar_updated_at")
+    private LocalDateTime avatarUpdatedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -40,6 +50,14 @@ public class UserEntity {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
+
+    public String getAvatarContentType() { return avatarContentType; }
+    public void setAvatarContentType(String avatarContentType) { this.avatarContentType = avatarContentType; }
+    public byte[] getAvatarBytes() { return avatarBytes; }
+    public void setAvatarBytes(byte[] avatarBytes) { this.avatarBytes = avatarBytes; }
+    public LocalDateTime getAvatarUpdatedAt() { return avatarUpdatedAt; }
+    public void setAvatarUpdatedAt(LocalDateTime avatarUpdatedAt) { this.avatarUpdatedAt = avatarUpdatedAt; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

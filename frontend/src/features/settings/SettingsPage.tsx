@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { PageSection } from "../../components/PageBits";
 import { getPreferences, setPreferences, type Preferences } from "../../services/preferences";
 
@@ -19,8 +19,8 @@ export function SettingsPage() {
   }, [preferences]);
 
   return (
-    <PageSection title="Settings" subtitle="Theme, accent colors, and notification behavior for the app shell.">
-      <div className="settings-grid">
+    <PageSection title="Workspace preferences" subtitle="Control app appearance, accent styling, and alert behavior from one place.">
+      <div className="settings-grid settings-grid-spaced">
         <section className="glass-panel settings-panel">
           <div className="panel-head">
             <div>
@@ -84,6 +84,12 @@ export function SettingsPage() {
                 <p>Show upcoming bills and recurring payment notices in the drawer.</p>
               </div>
               <input type="checkbox" checked={preferences.recurringAlerts} onChange={(event) => setLocalPreferences({ ...preferences, recurringAlerts: event.target.checked })} />
+            </label>`r`n            <label className="toggle-row checkbox-row">
+              <div>
+                <strong>Popup notifications</strong>
+                <p>Show a brief top-right popup when new alerts arrive.</p>
+              </div>
+              <input type="checkbox" checked={preferences.popupNotifications} onChange={(event) => setLocalPreferences({ ...preferences, popupNotifications: event.target.checked })} />
             </label>
           </div>
         </section>
@@ -91,3 +97,6 @@ export function SettingsPage() {
     </PageSection>
   );
 }
+
+
+

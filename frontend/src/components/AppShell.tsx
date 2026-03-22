@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState, type SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { api } from "../services/api";
@@ -30,6 +30,39 @@ const navSections = [
   { title: "Manage", items: [["Accounts", "/accounts"], ["Recurring", "/recurring"], ["Categories", "/categories"]] },
   { title: "Tools", items: [["Settings", "/settings"]] },
 ] as const;
+
+function NavIcon(props: SVGProps<SVGSVGElement> & { label: string }) {
+  const common = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.9,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+
+  switch (props.label) {
+    case "Dashboard":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><rect x="3" y="3" width="7" height="7" rx="2" {...common} /><rect x="14" y="3" width="7" height="5" rx="2" {...common} /><rect x="14" y="12" width="7" height="9" rx="2" {...common} /><rect x="3" y="14" width="7" height="7" rx="2" {...common} /></svg>;
+    case "Transactions":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><path d="M4 7h14" {...common} /><path d="M4 12h10" {...common} /><path d="M4 17h8" {...common} /><path d="m18 11 2 2-2 2" {...common} /></svg>;
+    case "Budgets":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><path d="M4 6h16" {...common} /><path d="M4 12h11" {...common} /><path d="M4 18h7" {...common} /><path d="M18 9v9" {...common} /><path d="M14 14h8" {...common} /></svg>;
+    case "Goals":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><circle cx="12" cy="12" r="8" {...common} /><circle cx="12" cy="12" r="4" {...common} /><path d="M19 5 14.5 9.5" {...common} /></svg>;
+    case "Reports":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><path d="M5 19V9" {...common} /><path d="M12 19V5" {...common} /><path d="M19 19v-7" {...common} /></svg>;
+    case "Accounts":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><rect x="3" y="6" width="18" height="12" rx="3" {...common} /><path d="M3 10h18" {...common} /><path d="M7 14h3" {...common} /></svg>;
+    case "Recurring":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><path d="M20 11a8 8 0 0 0-14.9-3" {...common} /><path d="M4 5v4h4" {...common} /><path d="M4 13a8 8 0 0 0 14.9 3" {...common} /><path d="M20 19v-4h-4" {...common} /></svg>;
+    case "Categories":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><path d="M4 7h7" {...common} /><path d="M4 12h16" {...common} /><path d="M4 17h11" {...common} /><circle cx="16.5" cy="7" r="1.5" fill="currentColor" stroke="none" /></svg>;
+    case "Settings":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><circle cx="12" cy="12" r="3" {...common} /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.55V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.04-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.64 8.4a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.55V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15.08 4h.05a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8.4v.05A1.7 1.7 0 0 0 20.95 9H21a2 2 0 0 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z" {...common} /></svg>;
+    default:
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...props}><circle cx="12" cy="12" r="7" {...common} /></svg>;
+  }
+}
 
 function createInitialTransactionForm(): TransactionForm {
   return {
@@ -83,6 +116,9 @@ function validateTransactionForm(form: TransactionForm): TransactionFormErrors {
 
 export function AppShell() {
   const [preferences, setLocalPreferences] = useState<Preferences>(() => getPreferences());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationPopups, setNotificationPopups] = useState<Array<{ id: string; message: string; severity: Notification["severity"]; source: string }>>([]);
+  const notificationSeenIds = useRef<Set<string>>(new Set());
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -95,6 +131,18 @@ export function AppShell() {
   const queryClient = useQueryClient();
   const session = getSession();
   const avatarLabel = (session?.displayName?.slice(0, 2) ?? session?.email?.slice(0, 2) ?? "PF").toUpperCase();
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ displayName: session?.displayName ?? "" });
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [avatarBust, setAvatarBust] = useState(0);
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+
+  const me = useQuery({
+    queryKey: ["me"],
+    queryFn: async () => (await api.get<{ id: string; email: string; displayName: string; hasAvatar: boolean }>("/api/users/me")).data,
+  });
+
+  const avatarUrl = me.data?.hasAvatar ? `/api/users/me/avatar?t=${avatarBust}` : null;
 
   const resetTransactionModal = () => {
     setForm(createInitialTransactionForm());
@@ -137,8 +185,11 @@ export function AppShell() {
 
   useEffect(() => {
     setShowProfile(false);
+    setShowEditProfile(false);
     setShowNotifications(false);
+    setSidebarOpen(false);
     setSearchTerm("");
+    setProfileError(null);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -146,11 +197,24 @@ export function AppShell() {
       if (event.key === "Escape") {
         setShowProfile(false);
         setShowNotifications(false);
+        setSidebarOpen(false);
+        setSearchTerm("");
         closeTransactionModal();
       }
     };
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(event.target as Node)) {
+        setSearchTerm("");
+      }
+    };
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("mousedown", onPointerDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("mousedown", onPointerDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -185,6 +249,28 @@ export function AppShell() {
     return true;
   }), [notifications.data, preferences.budgetAlerts, preferences.recurringAlerts]);
 
+  useEffect(() => {
+    if (!preferences.popupNotifications) return;
+    const seen = notificationSeenIds.current;
+    const newlyAdded = visibleNotifications.filter((item) => !seen.has(item.id));
+    newlyAdded.forEach((item) => seen.add(item.id));
+
+    if (!newlyAdded.length) return;
+
+    setNotificationPopups((current) => {
+      const merged = [...newlyAdded.map((item) => ({ id: item.id, message: item.message, severity: item.severity, source: item.source })), ...current];
+      return merged.slice(0, 3);
+    });
+  }, [preferences.popupNotifications, visibleNotifications]);
+
+  useEffect(() => {
+    if (!notificationPopups.length) return;
+    const timers = notificationPopups.map((popup) => window.setTimeout(() => {
+      setNotificationPopups((current) => current.filter((item) => item.id !== popup.id));
+    }, 4200));
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [notificationPopups]);
+
   const filteredCategories = (categories.data ?? []).filter((item) => item.type === form.type);
   const accountOptions = [{ value: "", label: "Select account" }, ...((accounts.data ?? []).map((item) => ({ value: item.id, label: item.name })))];
   const categoryOptions = [{ value: "", label: "Select category" }, ...filteredCategories.map((item) => ({ value: item.id, label: item.name }))];
@@ -193,16 +279,24 @@ export function AppShell() {
     const match = navSections.flatMap((section) => section.items).find(([, path]) => (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path)));
     return match?.[0] ?? "Dashboard";
   }, [location.pathname]);
-
-  const searchResults = useMemo(() => {
+  const navMatches = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
-    if (!normalized) return [];
+    if (!normalized) return [] as Array<{ label: string; path: string }>;
+    return navSections
+      .flatMap((section) => section.items)
+      .map(([label, path]) => ({ label, path }))
+      .filter((item) => item.label.toLowerCase().includes(normalized))
+      .slice(0, 6);
+  }, [searchTerm]);
+
+  const transactionMatches = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+    if (!normalized) return [] as Transaction[];
     return (transactions.data ?? [])
       .filter((item) => [item.merchant, item.category, item.account, item.note].some((value) => value?.toLowerCase().includes(normalized)))
       .slice(0, 6);
   }, [searchTerm, transactions.data]);
-
-  const handleSaveTransaction = async () => {
+const handleSaveTransaction = async () => {
     const validationErrors = validateTransactionForm(form);
     if (Object.keys(validationErrors).length) {
       setFormErrors(validationErrors);
@@ -233,7 +327,6 @@ export function AppShell() {
         queryClient.invalidateQueries({ queryKey: ['reports'] }),
         queryClient.invalidateQueries({ queryKey: ['notifications'] }),
       ]);
-      window.setTimeout(() => setToastMessage(null), 2600);
     } catch (err: any) {
       setFormError(err?.response?.data?.details?.[0] ?? err?.response?.data?.message ?? 'Failed to save transaction');
     }
@@ -259,14 +352,69 @@ export function AppShell() {
     setLocalPreferences(next);
   };
 
-  const openSearchResult = (id: string) => {
-    setSearchTerm('');
-    window.location.href = `/transactions?q=${encodeURIComponent(id)}`;
+  const saveProfile = async () => {
+    const displayName = profileForm.displayName.trim();
+    if (!displayName) {
+      setProfileError("Display name is required.");
+      return;
+    }
+
+    try {
+      setProfileError(null);
+      const { data } = await api.patch<{ id: string; email: string; displayName: string; hasAvatar: boolean }>("/api/users/me", { displayName });
+      const current = getSession();
+      if (current) {
+        // Update local session so UI updates immediately.
+        window.localStorage.setItem("finance_session", JSON.stringify({ ...current, displayName: data.displayName }));
+      }
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      showAppToast("Profile updated");
+      setShowEditProfile(false);
+    } catch (err: any) {
+      setProfileError(err?.response?.data?.message ?? "Failed to update profile");
+    }
+  };
+
+  const uploadAvatar = async (file: File) => {
+    try {
+      setProfileError(null);
+      const formData = new FormData();
+      formData.append("file", file);
+      await api.post("/api/users/me/avatar", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      setAvatarBust(Date.now());
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      showAppToast("Avatar updated");
+    } catch (err: any) {
+      setProfileError(err?.response?.data?.message ?? "Failed to upload avatar");
+    }
+  };
+
+  const removeAvatar = async () => {
+    try {
+      setProfileError(null);
+      await api.delete("/api/users/me/avatar");
+      setAvatarBust(Date.now());
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      showAppToast("Avatar removed");
+    } catch (err: any) {
+      setProfileError(err?.response?.data?.message ?? "Failed to remove avatar");
+    }
+  };
+
+  const openSearchResult = (merchant: string) => {
+    setSearchTerm("");
+    window.location.href = `/transactions?q=${encodeURIComponent(merchant)}`;
   };
 
   const submitSearch = () => {
     const term = searchTerm.trim();
-    window.location.href = term ? `/transactions?q=${encodeURIComponent(term)}` : '/transactions';
+    const normalized = term.toLowerCase();
+    const exactNav = navMatches.length === 1 && navMatches[0].label.toLowerCase().startsWith(normalized) && normalized.length >= 2;
+    if (exactNav) {
+      window.location.href = navMatches[0].path;
+      return;
+    }
+    window.location.href = term ? `/transactions?q=${encodeURIComponent(term)}` : "/transactions";
   };
 
   return (
@@ -274,7 +422,8 @@ export function AppShell() {
       <div className="ambient ambient-a" />
       <div className="ambient ambient-b" />
       <div className="shell shell-structured">
-        <aside className="sidebar">
+        {sidebarOpen ? <div className="sidebar-backdrop open" onClick={() => setSidebarOpen(false)} /> : null}
+        <aside className={sidebarOpen ? "sidebar sidebar-drawer open" : "sidebar sidebar-drawer"} onClick={(event) => event.stopPropagation()}>
           <div className="brand brand-text-only"><strong className="brand-title">Personal Finance Tracker</strong></div>
 
           <div className="sidebar-sections">
@@ -283,9 +432,10 @@ export function AppShell() {
                 <p className="sidebar-label">{section.title}</p>
                 <nav className="nav">
                   {section.items.map(([label, to]) => (
-                    <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                    <NavLink key={to} to={to} end={to === '/'} onClick={() => setSidebarOpen(false)} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                      <span className="nav-icon-wrap"><NavIcon label={label} className="nav-icon" /></span>
                       <span className="nav-dot" />
-                      {label}
+                      <span className="nav-text">{label}</span>
                     </NavLink>
                   ))}
                 </nav>
@@ -300,21 +450,49 @@ export function AppShell() {
               <h1>{pageTitle}</h1>
             </div>
             <div className="topbar-actions">
-              <div className="search-box">
+              <button className="icon-button quiet hamburger-button" type="button" onClick={() => setSidebarOpen((current) => !current)} aria-label="Toggle menu" />
+              <div className="search-box" ref={searchBoxRef}>
                 <label className="search-wrap">
                   <input className="search" placeholder="Search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitSearch(); }} />
                 </label>
                 {searchTerm.trim() ? (
                   <div className="search-results panel-enter">
-                    {searchResults.length ? searchResults.map((item) => (
-                      <button key={item.id} className="search-result" onClick={() => openSearchResult(item.id)}>
-                        <div>
-                          <strong>{item.merchant}</strong>
-                          <p>{item.category} � {item.account}</p>
-                        </div>
-                        <span>${item.amount}</span>
-                      </button>
-                    )) : <div className="search-empty">No matching transactions</div>}
+                    {navMatches.length ? (
+                      <>
+                        <div className="search-section-title">Navigate</div>
+                        {navMatches.map((item) => (
+                          <button
+                            key={item.path}
+                            className="search-result search-result-nav"
+                            onClick={() => {
+                              setSearchTerm("");
+                              window.location.href = item.path;
+                            }}
+                          >
+                            <div>
+                              <strong>{item.label}</strong>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    ) : null}
+
+                    {transactionMatches.length ? (
+                      <>
+                        <div className="search-section-title">Transactions</div>
+                        {transactionMatches.map((item) => (
+                          <button key={item.id} className="search-result" onClick={() => openSearchResult(item.merchant)}>
+                            <div>
+                              <strong>{item.merchant}</strong>
+                              <p>{item.category} · {item.account}</p>
+                            </div>
+                            <span>${item.amount}</span>
+                          </button>
+                        ))}
+                      </>
+                    ) : null}
+
+                    {!navMatches.length && !transactionMatches.length ? <div className="search-empty">No matches</div> : null}
                     <button className="search-footer" onClick={submitSearch}>Open filtered transactions</button>
                   </div>
                 ) : null}
@@ -384,6 +562,21 @@ export function AppShell() {
             </div>
           ) : null}
 
+          {notificationPopups.length ? (
+            <div className="notification-popups" role="status" aria-live="polite">
+              {notificationPopups.map((popup) => (
+                <div key={popup.id} className={`notification-popup ${popup.severity.toLowerCase()}`}>
+                  <div>
+                    <strong>{popup.source}</strong>
+                    <p>{popup.message}</p>
+                  </div>
+                  <button className="icon-button quiet close-icon-button popup-close" type="button" onClick={() => setNotificationPopups((current) => current.filter((item) => item.id !== popup.id))} aria-label="Dismiss notification" />
+                  <div className="popup-progress" />
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           {showNotifications ? (
             <div className="drawer-backdrop open drawer-scroll-shell" onClick={() => setShowNotifications(false)}>
               <aside className="notification-drawer open scrollable-drawer" onClick={(event) => event.stopPropagation()}>
@@ -421,6 +614,40 @@ export function AppShell() {
             </div>
           ) : null}
 
+
+          {showEditProfile ? (
+            <div className="modal-backdrop transaction-modal-backdrop" onClick={() => setShowEditProfile(false)}>
+              <div className="modal-card modal-card-structured solid-modal-card transaction-dialog-card profile-edit-modal" onClick={(event) => event.stopPropagation()}>
+                <div className="panel-head overlay-head">
+                  <div>
+                    <h2>Edit Profile</h2>
+                    <p>Update your display name and profile picture.</p>
+                  </div>
+                  <button className="icon-button quiet close-icon-button" type="button" onClick={() => setShowEditProfile(false)} aria-label="Close edit profile" />
+                </div>
+                <div className="form-grid structured-form-grid app-form-grid">
+                  <div className="profile-edit-avatar-row">
+                    {avatarUrl ? <img className="avatar-image avatar-image-xl" src={avatarUrl} alt="Profile avatar" /> : <div className="avatar avatar-xl">{avatarLabel}</div>}
+                    <div className="profile-edit-avatar-actions">
+                      <label className="button ghost profile-upload-button">
+                        Upload
+                        <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadAvatar(file); event.currentTarget.value = ''; }} />
+                      </label>
+                      <button className="button ghost danger-button" type="button" onClick={removeAvatar} disabled={!me.data?.hasAvatar}>Remove</button>
+                    </div>
+                  </div>
+
+                  <input placeholder="Display name" value={profileForm.displayName} onChange={(e) => setProfileForm({ displayName: e.target.value })} />
+                  {profileError ? <p className="form-error">{profileError}</p> : null}
+                  <div className="modal-actions">
+                    <button className="button ghost" type="button" onClick={() => setShowEditProfile(false)}>Cancel</button>
+                    <button className="button primary" type="button" onClick={saveProfile}>Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {showProfile ? (
             <div className="drawer-backdrop open drawer-scroll-shell" onClick={() => setShowProfile(false)}>
               <aside className="notification-drawer open profile-drawer scrollable-drawer" onClick={(event) => event.stopPropagation()}>
@@ -432,13 +659,17 @@ export function AppShell() {
                   <button className="icon-button quiet close-icon-button" onClick={() => setShowProfile(false)} aria-label="Close profile" />
                 </div>
                 <div className="profile-summary">
-                  <div className="avatar large">{avatarLabel}</div>
+                  {avatarUrl ? <img className="avatar-image avatar-image-large" src={avatarUrl} alt="Profile avatar" /> : <div className="avatar large">{avatarLabel}</div>}
                   <div>
                     <strong>{session?.displayName}</strong>
                     <p>{session?.email}</p>
                   </div>
                 </div>
-                <div className="preference-stack">
+                                <div className="preference-stack">
+                  <button className="preference-card preference-card-compact" onClick={() => { setShowProfile(false); setProfileForm({ displayName: (me.data?.displayName ?? session?.displayName ?? "").trim() }); setProfileError(null); setShowEditProfile(true); }}>
+                    <strong>Edit profile</strong>
+                    <span>Update display name and profile picture</span>
+                  </button>
                   <button className="preference-card" onClick={() => { setShowProfile(false); toggleTheme(); }}>
                     <strong>Theme mode</strong>
                     <span>{preferences.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</span>
@@ -453,7 +684,6 @@ export function AppShell() {
                   </button>
                 </div>
                 <div className="upgrade-actions profile-actions drawer-footer-actions">
-                  <button className="button ghost" onClick={() => { setShowProfile(false); window.location.href = '/settings'; }}>Settings</button>
                   <button className="button primary" onClick={handleLogout}>Log Out</button>
                 </div>
               </aside>
@@ -464,6 +694,37 @@ export function AppShell() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

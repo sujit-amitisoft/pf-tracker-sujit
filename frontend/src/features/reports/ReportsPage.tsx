@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../services/api";
 import { AppDateField, AppSelect } from "../../components/FormControls";
@@ -197,10 +198,46 @@ export function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
+
+  const exportPdf = () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const marginX = 48;
+    const titleY = 54;
+
+    doc.setFontSize(18);
+    doc.text("Finance Report", marginX, titleY);
+
+    doc.setFontSize(10);
+    const meta = [`Range: ${rangeLabel}`, `Account: ${accountLabel}`, `Type: ${typeLabel}`, `Category: ${categoryLabel}`].join("   |   ");
+    doc.text(meta, marginX, titleY + 18);
+
+    const rows = filteredTransactions.map((item) => ([
+      item.date,
+      item.merchant,
+      item.category,
+      item.account,
+      item.type,
+      `$${item.amount}`,
+      item.note ?? "",
+    ]));
+
+    (autoTable as any)(doc, {
+      startY: titleY + 36,
+      head: [["Date", "Merchant", "Category", "Account", "Type", "Amount", "Note"]],
+      body: rows.slice(0, 80),
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [30, 41, 59] },
+      theme: "striped",
+      margin: { left: marginX, right: marginX },
+    });
+
+    doc.save("finance-report.pdf");
+  };
+
   return (
     <>
       <section className="glass-panel reports-page-shell">
-        <div className="panel-head"><div><h2>Insight Center</h2><p>Filtered spend, trend, and top spending categories.</p></div></div>
+        <div className="panel-head reports-head"><div><h2>Insight Center</h2><p>Filtered spend, trend, and top spending categories.</p></div><div className="reports-export-actions"><button className="button primary reports-export-button" type="button" onClick={exportCsv}>Export CSV</button><button className="button primary reports-export-button" type="button" onClick={exportPdf}>Export PDF</button></div></div>
         <div className="filters-bar structured-filters-bar reports-filters reports-filters-wide">
           <AppSelect value={range} onChange={(value) => setRange(value as RangeOption)} options={rangeOptions} placeholder="This Month" />
           <AppSelect value={account} onChange={setAccount} options={accountOptions} placeholder="All accounts" />
@@ -216,7 +253,10 @@ export function ReportsPage() {
               {categorySpend.length ? categorySpend.map((item) => (
                 <div key={item.category} className="chart-list-row report-chart-row">
                   <span>{item.category}</span>
-                  <div className="mini-bar"><span style={{ width: `${(item.amount / maxSpend) * 100}%` }} /></div>
+                  <div className="report-bar-stack">
+                    <div className="mini-bar" title={`$${item.amount.toFixed(2)} of $${maxSpend.toFixed(2)}`}><span style={{ width: `${(item.amount / maxSpend) * 100}%` }} /></div>
+                    <div className="progress-caption"><span>$0</span><span>${item.amount.toFixed(0)} / ${maxSpend.toFixed(0)}</span><span>Max</span></div>
+                  </div>
                   <strong>${item.amount.toFixed(2)}</strong>
                 </div>
               )) : <div className="empty-state">No category spend found for these filters.</div>}
@@ -228,9 +268,12 @@ export function ReportsPage() {
               {trend.length ? trend.map((point) => (
                 <div key={point.period} className="trend-row report-trend-row">
                   <span>{point.period}</span>
-                  <div className="trend-bars">
-                    <div className="trend-bar income"><span style={{ width: `${(point.income / maxTrend) * 100}%` }} /></div>
-                    <div className="trend-bar expense"><span style={{ width: `${(point.expense / maxTrend) * 100}%` }} /></div>
+                  <div className="report-bar-stack">
+                    <div className="trend-bars">
+                      <div className="trend-bar income" title={`Income $${point.income.toFixed(2)} of $${maxTrend.toFixed(2)}`}><span style={{ width: `${(point.income / maxTrend) * 100}%` }} /></div>
+                      <div className="trend-bar expense" title={`Expense $${point.expense.toFixed(2)} of $${maxTrend.toFixed(2)}`}><span style={{ width: `${(point.expense / maxTrend) * 100}%` }} /></div>
+                    </div>
+                    <div className="progress-caption"><span>Income $${point.income.toFixed(0)}</span><span>Max $${maxTrend.toFixed(0)}</span><span>Expense $${point.expense.toFixed(0)}</span></div>
                   </div>
                 </div>
               )) : <div className="empty-state">No trend data found for these filters.</div>}
@@ -239,10 +282,11 @@ export function ReportsPage() {
         </div>
         <div className="top-categories-card report-top-categories">Top Categories: {topCategories || "No matching categories"}</div>
       </section>
-      {createPortal(<button className="reports-export-floating floating-add" type="button" onClick={exportCsv}>Export CSV</button>, document.body)}
     </>
   );
 }
+
+
 
 
 

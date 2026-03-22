@@ -177,9 +177,10 @@ export function DashboardPage() {
               <div key={point.period} className="trend-row compact-trend-row">
                 <span>{point.period}</span>
                 <div className="trend-bars">
-                  <div className="trend-bar income"><span style={{ width: `${(Number(point.income) / maxTrend) * 100}%` }} /></div>
-                  <div className="trend-bar expense"><span style={{ width: `${(Number(point.expense) / maxTrend) * 100}%` }} /></div>
+                  <div className="trend-bar income" title={`Income $${Number(point.income).toFixed(2)} of $${maxTrend.toFixed(2)}`}><span style={{ width: `${(Number(point.income) / maxTrend) * 100}%` }} /></div>
+                  <div className="trend-bar expense" title={`Expense $${Number(point.expense).toFixed(2)} of $${maxTrend.toFixed(2)}`}><span style={{ width: `${(Number(point.expense) / maxTrend) * 100}%` }} /></div>
                 </div>
+                <div className="progress-caption"><span>Income $${Number(point.income).toFixed(0)}</span><span>Max $${maxTrend.toFixed(0)}</span><span>Expense $${Number(point.expense).toFixed(0)}</span></div>
               </div>
             ))}
           </div>
