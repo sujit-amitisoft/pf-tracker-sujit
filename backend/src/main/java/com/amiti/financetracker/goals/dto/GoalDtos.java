@@ -18,7 +18,10 @@ public class GoalDtos {
             BigDecimal currentAmount,
             LocalDate targetDate,
             GoalStatus status,
-            int progressPercent
+            int progressPercent,
+            UUID linkedAccountId,
+            String linkedAccountName,
+            boolean shared
     ) {
     }
 

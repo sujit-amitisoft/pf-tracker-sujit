@@ -2,6 +2,7 @@ package com.amiti.financetracker.transactions.controller;
 
 import static com.amiti.financetracker.security.SecurityUtils.currentUserId;
 
+import com.amiti.financetracker.transactions.dto.TransactionDtos.TransactionImportRequest;
 import com.amiti.financetracker.transactions.dto.TransactionDtos.TransactionRequest;
 import com.amiti.financetracker.transactions.dto.TransactionDtos.TransactionResponse;
 import com.amiti.financetracker.transactions.service.TransactionService;
@@ -33,6 +34,11 @@ public class TransactionController {
 
     @PostMapping
     public TransactionResponse create(Authentication authentication, @Valid @RequestBody TransactionRequest request) { return transactionService.create(currentUserId(authentication), request); }
+
+    @PostMapping("/import")
+    public List<TransactionResponse> importTransactions(Authentication authentication, @Valid @RequestBody TransactionImportRequest request) {
+        return transactionService.importTransactions(currentUserId(authentication), request);
+    }
 
     @PutMapping("/{id}")
     public TransactionResponse update(Authentication authentication, @PathVariable UUID id, @Valid @RequestBody TransactionRequest request) { return transactionService.update(currentUserId(authentication), id, request); }

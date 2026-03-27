@@ -1,8 +1,8 @@
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../../services/api";
-import { setSession } from "../../services/session";
+import { getPendingInviteToken, setPendingInviteToken, setSession } from "../../services/session";
 import { getPreferences, setPreferences, type Preferences } from "../../services/preferences";
 
 type AuthResponse = {
@@ -15,37 +15,83 @@ type AuthResponse = {
 
 type AuthMode = "login" | "register" | "forgot" | "reset";
 
+type PasswordChecks = {
+  minLength: boolean;
+  uppercase: boolean;
+  lowercase: boolean;
+  number: boolean;
+};
+
+function validatePassword(password: string): PasswordChecks {
+  return {
+    minLength: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+  };
+}
+
+function resolveApiError(err: any): string {
+  const details = err?.response?.data?.details;
+  if (Array.isArray(details) && details.length) {
+    return details[0];
+  }
+  return err?.response?.data?.message ?? "Authentication failed";
+}
+
 export function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>("login");
   const [theme, setTheme] = useState<Preferences["theme"]>(() => getPreferences().theme);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [form, setForm] = useState({ displayName: "", email: "", password: "", resetToken: "", newPassword: "" });
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const resetTokenFromUrl = (searchParams.get("token") ?? "").trim();
   const modeFromUrl = (searchParams.get("mode") ?? "").trim();
+  const inviteTokenFromUrl = modeFromUrl === "invite" ? resetTokenFromUrl : "";
 
   useEffect(() => {
-    if (modeFromUrl !== "reset" || !resetTokenFromUrl) return;
-    setMode("reset");
-    setForm((current) => ({ ...current, resetToken: resetTokenFromUrl }));
-    setError(null);
-    setMessage(null);
+    if (modeFromUrl === "reset" && resetTokenFromUrl) {
+      setMode("reset");
+      setForm((current) => ({ ...current, resetToken: resetTokenFromUrl }));
+      setError(null);
+      setMessage(null);
+      return;
+    }
+    if (modeFromUrl === "invite" && resetTokenFromUrl) {
+      setPendingInviteToken(resetTokenFromUrl);
+      setMode("login");
+      setError(null);
+      setMessage("Log in or create an account with the invited email address to accept the shared account invitation.");
+    }
   }, [modeFromUrl, resetTokenFromUrl]);
+
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
-    if (error) {
-      setError(null);
-    }
+    if (error) setError(null);
   };
 
   const switchMode = (nextMode: AuthMode) => {
     setMode(nextMode);
     setError(null);
     setMessage(null);
+    setShowPassword(false);
+    setShowNewPassword(false);
   };
+
+  const afterAuthPath = inviteTokenFromUrl || getPendingInviteToken();
+  const passwordValue = mode === "reset" ? form.newPassword : form.password;
+  const passwordChecks = useMemo(() => validatePassword(passwordValue), [passwordValue]);
+  const shouldShowPasswordHelper = (mode === "register" || mode === "reset") && passwordValue.length > 0;
+  const allPasswordChecksPassed = Object.values(passwordChecks).every(Boolean);
+  const passwordHelperClass = allPasswordChecksPassed ? "signup-hint success" : "signup-hint error";
+  const passwordHelperText = allPasswordChecksPassed
+    ? "Password looks good."
+    : "Password must be at least 8 characters with uppercase, lowercase, and number.";
 
   const submit = async () => {
     setLoading(true);
@@ -61,16 +107,24 @@ export function AuthPage() {
         setMessage(data.message);
         switchMode("login");
       } else {
+        const credentials = { email: form.email, password: form.password };
         const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
         const payload = mode === "login"
-          ? { email: form.email, password: form.password }
-          : { email: form.email, password: form.password, displayName: form.displayName };
-        const { data } = await api.post<AuthResponse>(endpoint, payload);
-        setSession(data);
-        navigate(mode === "register" ? "/onboarding" : "/", { replace: true });
+          ? credentials
+          : { ...credentials, displayName: form.displayName };
+        const { data } = await api.post<Partial<AuthResponse>>(endpoint, payload);
+        const hasSession = Boolean(data?.accessToken && data?.refreshToken);
+        const session = hasSession ? (data as AuthResponse) : (await api.post<AuthResponse>("/api/auth/login", credentials)).data;
+        setSession(session);
+        const destination = afterAuthPath
+          ? `/shared-accounts?invite=${encodeURIComponent(afterAuthPath)}`
+          : mode === "register"
+            ? "/onboarding"
+            : "/";
+        window.location.replace(destination);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? "Authentication failed");
+      setError(resolveApiError(err));
     } finally {
       setLoading(false);
     }
@@ -90,12 +144,12 @@ export function AuthPage() {
         : "Set a new password using the secure reset link token.";
 
   return (
-    <div className="auth-screen-clean" data-theme={theme}>
+    <div className="auth-screen-clean" data-theme={theme === "dark" && getPreferences().amoledDark ? "amoled" : theme}>
       <div className="auth-clean-shell auth-box-shell">
         <section className={mode === "register" ? "auth-clean-hero auth-box-panel auth-box-panel-signup" : "auth-clean-hero auth-box-panel"}>
           <div key={mode === "register" ? "signup-title" : mode === "login" ? "login-title" : "auth-title"} className="auth-clean-badge auth-clean-badge-plain auth-type-title">Personal Finance Tracker</div>
           <div className="auth-clean-hero-box">
-            <h1>{mode === "login" ? "Hello, Welcome!" : "Start Your Journey"}</h1>
+            <h1>{mode === "login" ? "Track money clearly" : "Start Your Journey"}</h1>
             <p>{mode === "login" ? "Don't have an account?" : "Already have an account?"}</p>
             <button type="button" className="button auth-hero-button" onClick={() => switchMode(mode === "login" ? "register" : "login")}>
               {mode === "login" ? "Register" : "Login"}
@@ -103,7 +157,6 @@ export function AuthPage() {
             <div className="auth-theme-row">
               <button type="button" className="button ghost" onClick={() => { setTheme("light"); setPreferences({ ...getPreferences(), theme: "light" }); }}>Light</button>
               <button type="button" className="button ghost" onClick={() => { setTheme("dark"); setPreferences({ ...getPreferences(), theme: "dark" }); }}>Dark</button>
-              <button type="button" className="button ghost" onClick={() => { setTheme("amoled"); setPreferences({ ...getPreferences(), theme: "amoled" }); }}>AMOLED</button>
             </div>
           </div>
         </section>
@@ -117,16 +170,24 @@ export function AuthPage() {
           <form className="form-grid auth-form-grid clean-form-grid" onSubmit={handleSubmit}>
             {mode === "register" ? <input className="signup-input" placeholder="Display name" value={form.displayName} onChange={(e) => updateField("displayName", e.target.value)} /> : null}
             {mode !== "reset" ? <input className={mode === "register" ? "signup-input" : undefined} placeholder="Email" value={form.email} onChange={(e) => updateField("email", e.target.value)} /> : null}
-            {mode === "login" || mode === "register" ? <input className={mode === "register" ? "signup-input" : undefined} placeholder="Password" type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} /> : null}
+            {mode === "login" || mode === "register" ? (
+              <div className="auth-password-field">
+                <input className={mode === "register" ? "signup-input" : undefined} placeholder="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => updateField("password", e.target.value)} />
+                <button className="auth-password-toggle" type="button" onClick={() => setShowPassword((current) => !current)}>{showPassword ? "Hide" : "Show"}</button>
+              </div>
+            ) : null}
             {mode === "reset" ? (
               <>
                 {resetTokenFromUrl ? null : <input placeholder="Reset token" value={form.resetToken} onChange={(e) => updateField("resetToken", e.target.value)} />}
-                <input placeholder="New password" type="password" value={form.newPassword} onChange={(e) => updateField("newPassword", e.target.value)} />
+                <div className="auth-password-field">
+                  <input placeholder="New password" type={showNewPassword ? "text" : "password"} value={form.newPassword} onChange={(e) => updateField("newPassword", e.target.value)} />
+                  <button className="auth-password-toggle" type="button" onClick={() => setShowNewPassword((current) => !current)}>{showNewPassword ? "Hide" : "Show"}</button>
+                </div>
               </>
             ) : null}
-            {(mode === "register" || mode === "reset") ? <p className="settings-hint signup-hint">Password must be at least 8 characters with uppercase, lowercase, and number.</p> : null}
-            {message ? <p className="form-message">{message}</p> : null}
-            {error ? <p className="form-error">{error}</p> : null}
+            {shouldShowPasswordHelper ? <p className={passwordHelperClass}>{passwordHelperText}</p> : null}
+            {message ? <p className="form-message auth-feedback-success">{message}</p> : null}
+            {error ? <p className="form-error auth-feedback-error">{error}</p> : null}
             <button type="submit" className={mode === "register" ? "button primary auth-submit auth-submit-strong auth-submit-signup" : "button primary auth-submit auth-submit-strong"} disabled={loading}>
               {loading ? "Working..." : mode === "login" ? "Log In" : mode === "register" ? "Create Account" : mode === "forgot" ? "Send Reset Link" : "Reset Password"}
             </button>
@@ -141,9 +202,3 @@ export function AuthPage() {
     </div>
   );
 }
-
-
-
-
-
-

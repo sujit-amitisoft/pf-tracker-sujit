@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState, type SVGProps } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState, type SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { api } from "../services/api";
@@ -9,7 +9,7 @@ import { AppDateField, AppSelect } from "./FormControls";
 
 type Account = { id: string; name: string };
 type Category = { id: string; name: string; type: "INCOME" | "EXPENSE" };
-type Transaction = { id: string; merchant: string; category: string; account: string; type: string; amount: string; date: string; note: string };
+type Transaction = { id: string; merchant: string; category: string; account: string; type: string; amount: string; date: string; note: string; tags?: string[] };
 type Notification = { id: string; severity: "INFO" | "WARNING" | "SUCCESS" | "DANGER"; message: string; source: string; createdAt: string };
 
 type TransactionForm = {
@@ -26,9 +26,9 @@ type TransactionForm = {
 type TransactionFormErrors = Partial<Record<keyof TransactionForm, string>>;
 
 const navSections = [
-  { title: "Main", items: [["Dashboard", "/"], ["Transactions", "/transactions"], ["Budgets", "/budgets"], ["Goals", "/goals"], ["Reports", "/reports"]] },
-  { title: "Manage", items: [["Accounts", "/accounts"], ["Recurring", "/recurring"], ["Categories", "/categories"]] },
-  { title: "Tools", items: [["Settings", "/settings"]] },
+  { title: "Main", items: [["Dashboard", "/"], ["Transactions", "/transactions"], ["Budgets", "/budgets"], ["Goals", "/goals"], ["Reports", "/reports"], ["Insights", "/insights"]] },
+  { title: "Manage", items: [["Accounts", "/accounts"], ["Shared Accounts", "/shared-accounts"], ["Recurring", "/recurring"], ["Categories", "/categories"]] },
+  { title: "Tools", items: [["Rules Engine", "/rules-engine"], ["Settings", "/settings"]] },
 ] as const;
 
 function NavIcon(props: SVGProps<SVGSVGElement> & { label: string }) {
@@ -179,7 +179,7 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = preferences.theme;
+    document.documentElement.dataset.theme = preferences.theme === "dark" && preferences.amoledDark ? "amoled" : preferences.theme;
     document.documentElement.dataset.accent = preferences.accent;
   }, [preferences]);
 
@@ -307,7 +307,7 @@ const handleSaveTransaction = async () => {
     try {
       setFormError(null);
       setFormErrors({});
-      await api.post('/api/transactions', {
+      const { data } = await api.post<Transaction>('/api/transactions', {
         type: form.type,
         amount: Number(form.amount),
         date: form.date,
@@ -319,14 +319,17 @@ const handleSaveTransaction = async () => {
         tags: form.tags ? form.tags.split(',').map((item) => item.trim()).filter(Boolean) : [],
       });
       closeTransactionModal();
+      queryClient.setQueryData<Transaction[]>(['transactions'], (current) => data ? [data, ...(current ?? [])] : current ?? []);
       showAppToast('Transaction saved');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['transactions'] }),
-        queryClient.invalidateQueries({ queryKey: ['budgets'] }),
-        queryClient.invalidateQueries({ queryKey: ['reports'] }),
-        queryClient.invalidateQueries({ queryKey: ['notifications'] }),
-      ]);
+      startTransition(() => {
+        void Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+          queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+          queryClient.invalidateQueries({ queryKey: ['budgets'] }),
+          queryClient.invalidateQueries({ queryKey: ['reports'] }),
+          queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+        ]);
+      });
     } catch (err: any) {
       setFormError(err?.response?.data?.details?.[0] ?? err?.response?.data?.message ?? 'Failed to save transaction');
     }
@@ -418,7 +421,7 @@ const handleSaveTransaction = async () => {
   };
 
   return (
-    <div className="app-frame" data-theme={preferences.theme} data-accent={preferences.accent}>
+    <div className="app-frame" data-theme={preferences.theme === "dark" && preferences.amoledDark ? "amoled" : preferences.theme} data-accent={preferences.accent}>
       <div className="ambient ambient-a" />
       <div className="ambient ambient-b" />
       <div className="shell shell-structured">
@@ -484,7 +487,7 @@ const handleSaveTransaction = async () => {
                           <button key={item.id} className="search-result" onClick={() => openSearchResult(item.merchant)}>
                             <div>
                               <strong>{item.merchant}</strong>
-                              <p>{item.category} · {item.account}</p>
+                              <p>{item.category} � {item.account}</p>
                             </div>
                             <span>${item.amount}</span>
                           </button>
@@ -694,6 +697,12 @@ const handleSaveTransaction = async () => {
     </div>
   );
 }
+
+
+
+
+
+
 
 
 

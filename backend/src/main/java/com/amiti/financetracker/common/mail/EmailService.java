@@ -18,11 +18,19 @@ public class EmailService {
     @Value("${app.mail-from:no-reply@amiti.local}")
     private String from;
 
+    @Value("${spring.mail.host:}")
+    private String host;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
     public void send(String to, String subject, String bodyText) {
+        if (host == null || host.isBlank()) {
+            log.warn("SMTP is not configured. Email to {} with subject '{}' was not sent.", to, subject);
+            throw new IllegalStateException("Email delivery is not configured");
+        }
+
         MimeMessage message = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
@@ -32,7 +40,7 @@ public class EmailService {
             helper.setText(bodyText, false);
             mailSender.send(message);
         } catch (MessagingException ex) {
-            log.error("Failed to compose reset email for {}", to, ex);
+            log.error("Failed to compose email for {}", to, ex);
             throw new IllegalStateException("Email compose failed");
         } catch (RuntimeException ex) {
             log.error("Failed to send email to {}", to, ex);

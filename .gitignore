@@ -8,3 +8,5 @@ yarn-error.log*
 .idea/
 target/
 build/
+.chrome-tmp/
+docs/

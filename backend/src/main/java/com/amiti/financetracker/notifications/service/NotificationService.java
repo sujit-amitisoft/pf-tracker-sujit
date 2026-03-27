@@ -12,6 +12,8 @@ import com.amiti.financetracker.notifications.dto.NotificationDtos.NotificationR
 import com.amiti.financetracker.notifications.dto.NotificationDtos.NotificationSeverity;
 import com.amiti.financetracker.recurring.dto.RecurringDtos.RecurringResponse;
 import com.amiti.financetracker.recurring.service.RecurringService;
+import com.amiti.financetracker.transactions.dto.TransactionDtos.TransactionResponse;
+import com.amiti.financetracker.transactions.service.TransactionService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,6 +23,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,21 +33,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
     private static final int RECURRING_LOOKAHEAD_DAYS = 3;
     private static final int GOAL_LOOKAHEAD_DAYS = 14;
+    private static final Pattern ALERT_PATTERN = Pattern.compile("\\[Alert: (.+?)\\]");
 
     private final BudgetService budgetService;
     private final RecurringService recurringService;
     private final GoalService goalService;
+    private final TransactionService transactionService;
     private final NotificationDismissalRepository notificationDismissalRepository;
 
     public NotificationService(
             BudgetService budgetService,
             RecurringService recurringService,
             GoalService goalService,
+            TransactionService transactionService,
             NotificationDismissalRepository notificationDismissalRepository
     ) {
         this.budgetService = budgetService;
         this.recurringService = recurringService;
         this.goalService = goalService;
+        this.transactionService = transactionService;
         this.notificationDismissalRepository = notificationDismissalRepository;
     }
 
@@ -177,6 +185,23 @@ public class NotificationService {
                     "goal",
                     goal.targetDate().atStartOfDay()
             ));
+        }
+
+        for (TransactionResponse transaction : transactionService.list(userId)) {
+            if (transaction.date() == null || transaction.note() == null || transaction.date().isBefore(today.minusDays(7))) {
+                continue;
+            }
+            Matcher matcher = ALERT_PATTERN.matcher(transaction.note());
+            while (matcher.find()) {
+                String alert = matcher.group(1);
+                notifications.add(candidate(
+                        "rule:" + transaction.id() + ":" + alert,
+                        NotificationSeverity.WARNING,
+                        alert + " for " + (transaction.merchant() == null || transaction.merchant().isBlank() ? transaction.category() : transaction.merchant()) + ".",
+                        "rule",
+                        transaction.date().atStartOfDay()
+                ));
+            }
         }
 
         return notifications;

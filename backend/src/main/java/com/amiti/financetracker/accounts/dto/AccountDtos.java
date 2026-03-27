@@ -18,7 +18,10 @@ public class AccountDtos {
             AccountType type,
             BigDecimal currentBalance,
             String institutionName,
-            LocalDateTime lastUpdatedAt
+            LocalDateTime lastUpdatedAt,
+            boolean shared,
+            String accessRole,
+            int memberCount
     ) {
     }
 

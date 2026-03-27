@@ -4,12 +4,18 @@ import { AppDateField, AppSelect } from "../../components/FormControls";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-type Goal = { id: string; name: string; targetAmount: string; currentAmount: string; targetDate: string; status: string; progressPercent: number };
-type Account = { id: string; name: string };
+type Goal = { id: string; name: string; targetAmount: string; currentAmount: string; targetDate: string; status: string; progressPercent: number; linkedAccountId: string | null; linkedAccountName: string | null; shared: boolean };
+type Account = { id: string; name: string; accessRole: string };
+
+type GoalForm = { id?: string; name: string; targetAmount: string; targetDate: string; linkedAccountId: string };
+
+function createInitialGoalForm(): GoalForm {
+  return { name: "", targetAmount: "", targetDate: "", linkedAccountId: "" };
+}
 
 export function GoalsPage() {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", targetAmount: "", targetDate: "", linkedAccountId: "" });
+  const [form, setForm] = useState<GoalForm>(() => createInitialGoalForm());
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmGoalId, setDeleteConfirmGoalId] = useState<string | null>(null);
   const goals = useQuery({ queryKey: ["goals"], queryFn: async () => (await api.get<Goal[]>("/api/goals")).data });
@@ -21,24 +27,41 @@ export function GoalsPage() {
       return;
     }
     setError(null);
-    await api.post("/api/goals", {
+    const payload = {
       name: form.name,
       targetAmount: Number(form.targetAmount),
       targetDate: form.targetDate || null,
       linkedAccountId: form.linkedAccountId || null,
       icon: "target",
       color: "teal",
-    });
-    setForm({ name: "", targetAmount: "", targetDate: "", linkedAccountId: "" });
+    };
+    if (form.id) {
+      await api.put(`/api/goals/${form.id}`, payload);
+    } else {
+      await api.post("/api/goals", payload);
+    }
+    setForm(createInitialGoalForm());
     await queryClient.invalidateQueries({ queryKey: ["goals"] });
     await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  };
+
+  const editGoal = (item: Goal) => {
+    setForm({
+      id: item.id,
+      name: item.name,
+      targetAmount: item.targetAmount,
+      targetDate: item.targetDate || "",
+      linkedAccountId: item.linkedAccountId || "",
+    });
+    setError(null);
   };
 
   const confirmDeleteGoal = async () => {
     if (!deleteConfirmGoalId) return;
     await api.delete(`/api/goals/${deleteConfirmGoalId}`);
     setDeleteConfirmGoalId(null);
+    if (form.id === deleteConfirmGoalId) setForm(createInitialGoalForm());
     await queryClient.invalidateQueries({ queryKey: ["goals"] });
     await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     await queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -46,7 +69,7 @@ export function GoalsPage() {
 
   const accountOptions = [
     { value: "", label: "Optional linked account" },
-    ...((accounts.data ?? []).map((item) => ({ value: item.id, label: item.name }))),
+    ...((accounts.data ?? []).map((item) => ({ value: item.id, label: `${item.name} (${item.accessRole})` }))),
   ];
 
   const handleTargetAmountChange = (value: string) => {
@@ -67,7 +90,7 @@ export function GoalsPage() {
           <div className="panel-head budgets-head">
             <div>
               <h2>Savings Planner</h2>
-              <p>Create and track savings goals with deadlines.</p>
+              <p>Create personal or shared savings goals and connect them to accessible accounts.</p>
             </div>
           </div>
           <div className="form-grid compact-form-grid panel-enter app-form-strip goals-form-strip goals-form-row">
@@ -75,32 +98,39 @@ export function GoalsPage() {
             <input placeholder="Target amount" inputMode="decimal" value={form.targetAmount} onChange={(e) => handleTargetAmountChange(e.target.value)} />
             <AppDateField value={form.targetDate} onChange={(e) => setForm({ ...form, targetDate: e.target.value })} />
             <AppSelect value={form.linkedAccountId} onChange={(value) => setForm({ ...form, linkedAccountId: value })} options={accountOptions} placeholder="Optional linked account" className="goals-linked-account-select" />
-            <button className="button primary budgets-action-button goals-inline-action" onClick={saveGoal}>Add Contribution</button>
+            <button className="button primary budgets-action-button goals-inline-action" onClick={saveGoal}>{form.id ? "Update Goal" : "Create Goal"}</button>
           </div>
           {error ? <p className="form-error budget-form-error">{error}</p> : null}
         </div>
 
-        <div className="table-shell transactions-table-shell goals-table-shell">
-          <div className="goal-list structured-goal-list goals-table-list goals-table-scrollable">
-            {(goals.data ?? []).map((item) => (
-              <article key={item.id} className="goal-card structured-goal-card goals-table-row">
-                <div className="goals-table-main">
-                  <strong>{item.name}</strong>
-                  <span>{item.currentAmount} / {item.targetAmount}</span>
-                </div>
-                <div className="goals-table-progress">
+        <div className="table-shell transactions-table-shell goals-table-shell transactions-list-shell">
+          <div className="table-row table-head table-row-transactions goals-table-head-row">
+            <span>Name</span>
+            <span>Saved</span>
+            <span>Target</span>
+            <span>Progress</span>
+            <span>Due</span>
+            <span>Status</span>
+            <span className="actions-header">Actions</span>
+          </div>
+          <div className="transactions-table-body transactions-table-scrollable">
+            {(goals.data ?? []).length ? (goals.data ?? []).map((item) => (
+              <div key={item.id} className="table-row table-row-transactions transaction-data-row goals-table-data-row">
+                <span className="transaction-merchant-cell"><strong>{item.name}</strong><small>{item.linkedAccountName ? `${item.shared ? "Shared" : "Linked"}: ${item.linkedAccountName}` : "Standalone goal"}</small></span>
+                <span>${item.currentAmount}</span>
+                <span>${item.targetAmount}</span>
+                <span className="budgets-inline-progress-cell">
                   <div className="meter" title={`Saved $${Number(item.currentAmount).toFixed(2)} of $${Number(item.targetAmount).toFixed(2)} (${item.progressPercent}%)`}><span style={{ width: `${item.progressPercent}%` }} /></div>
-                  <div className="progress-caption"><span>0%</span><span>${item.currentAmount} / ${item.targetAmount}</span><span>100%</span></div>
-                  <div className="goal-percent">{item.progressPercent}%</div>
+                  <small>{item.progressPercent}% complete</small>
+                </span>
+                <span>{item.targetDate || "No date"}</span>
+                <span><span className={`status-chip ${item.shared ? "paused" : "active"}`}>{item.status}</span></span>
+                <div className="row-actions transactions-row-actions compact-row-actions compact-row-actions-inline">
+                  <button className="button ghost small transaction-action-button edit-action-button" type="button" onClick={() => editGoal(item)}>Edit</button>
+                  <button className="button ghost small transaction-action-button danger-button delete-action-button" type="button" onClick={() => setDeleteConfirmGoalId(item.id)}>Delete</button>
                 </div>
-                <div className="goals-table-due">Due: {item.targetDate || "No date"}</div>
-                <div className="goals-row-trash-wrap">
-                  <button className="goal-trash-button" type="button" onClick={() => setDeleteConfirmGoalId(item.id)} aria-label={`Delete ${item.name}`}>
-                    <span className="goal-trash-icon" aria-hidden="true" />
-                  </button>
-                </div>
-              </article>
-            ))}
+              </div>
+            )) : <div className="empty-state">No goals created yet.</div>}
           </div>
         </div>
       </section>
@@ -117,7 +147,7 @@ export function GoalsPage() {
             </div>
             <div className="delete-confirm-copy">
               <strong>{deleteTarget?.name ?? "Goal"}</strong>
-              <p>{deleteTarget ? `${deleteTarget.currentAmount} / ${deleteTarget.targetAmount} - Due: ${deleteTarget.targetDate || "No date"}` : "This action cannot be undone."}</p>
+              <p>{deleteTarget ? `${deleteTarget.currentAmount} / ${deleteTarget.targetAmount} - ${deleteTarget.linkedAccountName ?? "No linked account"}` : "This action cannot be undone."}</p>
             </div>
             <div className="modal-actions delete-modal-actions">
               <button className="button ghost" type="button" onClick={() => setDeleteConfirmGoalId(null)}>Cancel</button>
@@ -130,6 +160,3 @@ export function GoalsPage() {
     </>
   );
 }
-
-
-

@@ -33,115 +33,112 @@ public class DemoFinanceDataService {
     public DashboardSummaryResponse dashboardSummary() {
         return new DashboardSummaryResponse(
                 new BigDecimal("2400.00"),
-                new BigDecimal("1184.75"),
-                new BigDecimal("1215.25"),
-                new BigDecimal("78.50"),
-                4,
-                2
+                new BigDecimal("1112.00"),
+                new BigDecimal("1288.00"),
+                new BigDecimal("53.67"),
+                2,
+                1
         );
     }
 
     public List<RecentTransactionItem> recentTransactions() {
         return List.of(
-                new RecentTransactionItem(UUID.randomUUID(), "Grocery Mart", "Food", TransactionType.EXPENSE, new BigDecimal("42.00"), LocalDate.now().minusDays(1)),
-                new RecentTransactionItem(UUID.randomUUID(), "Employer Inc", "Salary", TransactionType.INCOME, new BigDecimal("2400.00"), LocalDate.now().minusDays(2)),
-                new RecentTransactionItem(UUID.randomUUID(), "Uber", "Transport", TransactionType.EXPENSE, new BigDecimal("11.50"), LocalDate.now().minusDays(3))
+                new RecentTransactionItem(UUID.randomUUID(), "Fresh Basket", "Food", TransactionType.EXPENSE, new BigDecimal("120.00"), LocalDate.now().minusDays(3)),
+                new RecentTransactionItem(UUID.randomUUID(), "Uber", "Transport", TransactionType.EXPENSE, new BigDecimal("28.00"), LocalDate.now().minusDays(2)),
+                new RecentTransactionItem(UUID.randomUUID(), "Power Grid", "Utilities", TransactionType.EXPENSE, new BigDecimal("64.00"), LocalDate.now().minusDays(1))
         );
     }
 
     public List<RecurringPreviewItem> upcomingRecurring() {
         return List.of(
-                new RecurringPreviewItem(UUID.randomUUID(), "Netflix", LocalDate.now().plusDays(2), new BigDecimal("15.99")),
-                new RecurringPreviewItem(UUID.randomUUID(), "Rent", LocalDate.now().plusDays(7), new BigDecimal("650.00"))
+                new RecurringPreviewItem(UUID.randomUUID(), "Netflix", LocalDate.now().plusDays(2), new BigDecimal("15.99"))
         );
     }
 
     public List<BudgetProgressResponse> budgetProgress() {
         return List.of(
-                new BudgetProgressResponse(UUID.randomUUID(), "Food", new BigDecimal("800"), new BigDecimal("650"), 81),
-                new BudgetProgressResponse(UUID.randomUUID(), "Transport", new BigDecimal("250"), new BigDecimal("120"), 48)
+                new BudgetProgressResponse(UUID.randomUUID(), "Food", new BigDecimal("300"), new BigDecimal("120"), 40),
+                new BudgetProgressResponse(UUID.randomUUID(), "Transport", new BigDecimal("120"), new BigDecimal("28"), 23)
         );
     }
 
     public List<GoalProgressItem> goalSummary() {
         return List.of(
-                new GoalProgressItem(UUID.randomUUID(), "Emergency Fund", new BigDecimal("100000"), new BigDecimal("45000"), LocalDate.of(2026, 12, 31), 45),
-                new GoalProgressItem(UUID.randomUUID(), "Vacation", new BigDecimal("50000"), new BigDecimal("20000"), LocalDate.of(2026, 8, 30), 40)
+                new GoalProgressItem(UUID.randomUUID(), "Emergency Fund", new BigDecimal("10000"), new BigDecimal("4200"), LocalDate.now().plusMonths(8), 42)
         );
     }
 
     public List<NotificationResponse> notifications() {
         return List.of(
-                new NotificationResponse(UUID.randomUUID(), NotificationSeverity.WARNING, "Food budget is at 81% for this month.", "budget", LocalDate.now().atStartOfDay()),
+                new NotificationResponse(UUID.randomUUID(), NotificationSeverity.WARNING, "Grocery spike detected on Fresh Basket.", "budget", LocalDate.now().atStartOfDay()),
                 new NotificationResponse(UUID.randomUUID(), NotificationSeverity.INFO, "Netflix renewal is due in 2 days.", "recurring", LocalDate.now().atStartOfDay())
         );
     }
 
     public List<AccountResponse> accounts() {
         return List.of(
-                new AccountResponse(UUID.randomUUID(), "HDFC Bank", AccountType.BANK_ACCOUNT, new BigDecimal("15000"), "HDFC", LocalDate.now().atStartOfDay()),
-                new AccountResponse(UUID.randomUUID(), "Credit Card", AccountType.CREDIT_CARD, new BigDecimal("-2200"), "Visa", LocalDate.now().atStartOfDay())
+                new AccountResponse(UUID.randomUUID(), "Primary Bank", AccountType.BANK_ACCOUNT, new BigDecimal("4500"), "Amiti Bank", LocalDate.now().atStartOfDay(), false, "OWNER", 1),
+                new AccountResponse(UUID.randomUUID(), "Everyday Card", AccountType.CREDIT_CARD, new BigDecimal("-320"), "Amiti Card Services", LocalDate.now().atStartOfDay(), false, "OWNER", 1)
         );
     }
 
     public List<CategoryResponse> categories() {
         return List.of(
                 new CategoryResponse(UUID.randomUUID(), "Food", CategoryType.EXPENSE, "#ffb347", "utensils", false),
+                new CategoryResponse(UUID.randomUUID(), "Transport", CategoryType.EXPENSE, "#38bdf8", "bus", false),
+                new CategoryResponse(UUID.randomUUID(), "Utilities", CategoryType.EXPENSE, "#f97316", "bolt", false),
                 new CategoryResponse(UUID.randomUUID(), "Salary", CategoryType.INCOME, "#1f8a70", "briefcase", false)
         );
     }
 
     public List<TransactionResponse> transactions() {
         return List.of(
-                new TransactionResponse(UUID.randomUUID(), "Grocery Mart", "Food", "HDFC Bank", TransactionType.EXPENSE, new BigDecimal("42.00"), LocalDate.now().minusDays(1), "Weekly groceries"),
-                new TransactionResponse(UUID.randomUUID(), "Employer Inc", "Salary", "HDFC Bank", TransactionType.INCOME, new BigDecimal("2400.00"), LocalDate.now().minusDays(2), "Monthly salary")
+                new TransactionResponse(UUID.randomUUID(), "Fresh Basket", "Food", "Everyday Card", TransactionType.EXPENSE, new BigDecimal("120.00"), LocalDate.now().minusDays(3), "Groceries [Alert: Grocery spike]", List.of("groceries", "weekly")),
+                new TransactionResponse(UUID.randomUUID(), "Uber", "Transport", "Everyday Card", TransactionType.EXPENSE, new BigDecimal("28.00"), LocalDate.now().minusDays(2), "Airport commute", List.of("travel")),
+                new TransactionResponse(UUID.randomUUID(), "Salary Credit", "Salary", "Primary Bank", TransactionType.INCOME, new BigDecimal("2400.00"), LocalDate.now().minusDays(6), "Monthly salary", List.of("income", "payroll"))
         );
     }
 
     public List<BudgetResponse> budgets() {
         return List.of(
-                new BudgetResponse(UUID.randomUUID(), UUID.randomUUID(), "Food", 3, 2026, new BigDecimal("800"), 80, new BigDecimal("650"), 81),
-                new BudgetResponse(UUID.randomUUID(), UUID.randomUUID(), "Entertainment", 3, 2026, new BigDecimal("200"), 80, new BigDecimal("210"), 105)
+                new BudgetResponse(UUID.randomUUID(), UUID.randomUUID(), "Food", null, "All accessible accounts", LocalDate.now().getMonthValue(), LocalDate.now().getYear(), new BigDecimal("300"), 80, new BigDecimal("120"), 40, false),
+                new BudgetResponse(UUID.randomUUID(), UUID.randomUUID(), "Transport", null, "All accessible accounts", LocalDate.now().getMonthValue(), LocalDate.now().getYear(), new BigDecimal("120"), 80, new BigDecimal("28"), 23, false)
         );
     }
 
     public List<GoalResponse> goals() {
         return List.of(
-                new GoalResponse(UUID.randomUUID(), "Emergency Fund", new BigDecimal("100000"), new BigDecimal("45000"), LocalDate.of(2026, 12, 31), GoalStatus.ACTIVE, 45),
-                new GoalResponse(UUID.randomUUID(), "Vacation", new BigDecimal("50000"), new BigDecimal("20000"), LocalDate.of(2026, 8, 30), GoalStatus.ACTIVE, 40)
+                new GoalResponse(UUID.randomUUID(), "Emergency Fund", new BigDecimal("10000"), new BigDecimal("4200"), LocalDate.now().plusMonths(8), GoalStatus.ACTIVE, 42, null, null, false)
         );
     }
 
     public List<RecurringResponse> recurringItems() {
         return List.of(
-                new RecurringResponse(UUID.randomUUID(), "Netflix", TransactionType.EXPENSE, new BigDecimal("15.99"), "Entertainment", "Credit Card", RecurringFrequency.MONTHLY, LocalDate.now().plusDays(2), true, false),
-                new RecurringResponse(UUID.randomUUID(), "Salary", TransactionType.INCOME, new BigDecimal("2400.00"), "Salary", "HDFC Bank", RecurringFrequency.MONTHLY, LocalDate.now().plusDays(13), true, false)
+                new RecurringResponse(UUID.randomUUID(), "Netflix", TransactionType.EXPENSE, new BigDecimal("15.99"), "Subscriptions", "Everyday Card", RecurringFrequency.MONTHLY, LocalDate.now().plusDays(2), true, false)
         );
     }
 
     public List<CategorySpendPoint> categorySpend() {
         return List.of(
-                new CategorySpendPoint("Food", new BigDecimal("650")),
-                new CategorySpendPoint("Rent", new BigDecimal("650")),
-                new CategorySpendPoint("Transport", new BigDecimal("120"))
+                new CategorySpendPoint("Rent", new BigDecimal("900")),
+                new CategorySpendPoint("Food", new BigDecimal("120")),
+                new CategorySpendPoint("Transport", new BigDecimal("28")),
+                new CategorySpendPoint("Utilities", new BigDecimal("64"))
         );
     }
 
     public List<IncomeExpenseTrendPoint> incomeExpenseTrend() {
         return List.of(
-                new IncomeExpenseTrendPoint("Jan", new BigDecimal("2200"), new BigDecimal("1450")),
-                new IncomeExpenseTrendPoint("Feb", new BigDecimal("2300"), new BigDecimal("1520")),
-                new IncomeExpenseTrendPoint("Mar", new BigDecimal("2400"), new BigDecimal("1184.75"))
+                new IncomeExpenseTrendPoint("Feb", new BigDecimal("2200"), new BigDecimal("980")),
+                new IncomeExpenseTrendPoint("Mar", new BigDecimal("2400"), new BigDecimal("1112"))
         );
     }
 
     public List<AccountBalanceTrendPoint> accountBalanceTrend() {
         return List.of(
-                new AccountBalanceTrendPoint("Jan", new BigDecimal("8200")),
-                new AccountBalanceTrendPoint("Feb", new BigDecimal("9700")),
-                new AccountBalanceTrendPoint("Mar", new BigDecimal("12150"))
+                new AccountBalanceTrendPoint("Week 1", new BigDecimal("4500")),
+                new AccountBalanceTrendPoint("Week 2", new BigDecimal("3920")),
+                new AccountBalanceTrendPoint("Week 3", new BigDecimal("4688"))
         );
     }
 }
-
-

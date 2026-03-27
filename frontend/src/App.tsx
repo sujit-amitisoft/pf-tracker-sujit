@@ -7,6 +7,9 @@ import { TransactionsPage } from "./features/transactions/TransactionsPage";
 import { BudgetsPage } from "./features/budgets/BudgetsPage";
 import { GoalsPage } from "./features/goals/GoalsPage";
 import { ReportsPage } from "./features/reports/ReportsPage";
+import { InsightsPage } from "./features/insights/InsightsPage";
+import { RulesEnginePage } from "./features/rules/RulesEnginePage";
+import { SharedAccountsPage } from "./features/shared/SharedAccountsPage";
 import { RecurringPage } from "./features/recurring/RecurringPage";
 import { AccountsPage } from "./features/accounts/AccountsPage";
 import { CategoriesPage } from "./features/categories/CategoriesPage";
@@ -32,6 +35,9 @@ export default function App() {
           <Route path="budgets" element={<BudgetsPage />} />
           <Route path="goals" element={<GoalsPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="insights" element={<InsightsPage />} />
+          <Route path="rules-engine" element={<RulesEnginePage />} />
+          <Route path="shared-accounts" element={<SharedAccountsPage />} />
           <Route path="recurring" element={<RecurringPage />} />
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="categories" element={<CategoriesPage />} />

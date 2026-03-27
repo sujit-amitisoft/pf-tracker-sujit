@@ -1,6 +1,7 @@
-﻿export type Preferences = {
-  theme: "dark" | "light" | "amoled";
+export type Preferences = {
+  theme: "dark" | "light";
   accent: "teal" | "amber" | "rose" | "sky" | "violet" | "emerald";
+  amoledDark: boolean;
   emailNotifications: boolean;
   budgetAlerts: boolean;
   recurringAlerts: boolean;
@@ -13,6 +14,7 @@ const EVENT = "finance-preferences-changed";
 const defaults: Preferences = {
   theme: "light",
   accent: "sky",
+  amoledDark: false,
   emailNotifications: false,
   budgetAlerts: true,
   recurringAlerts: true,

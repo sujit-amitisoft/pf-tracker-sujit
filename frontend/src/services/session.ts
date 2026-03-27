@@ -8,6 +8,7 @@ export type SessionUser = {
 };
 
 const SESSION_KEY = "finance_session";
+const PENDING_INVITE_KEY = "pending_shared_invite";
 
 export function getSession(): SessionUser | null {
   const raw = window.localStorage.getItem(SESSION_KEY);
@@ -24,4 +25,16 @@ export function clearSession() {
 
 export function isAuthenticated() {
   return !!getSession()?.accessToken;
+}
+
+export function setPendingInviteToken(token: string | null) {
+  if (!token) {
+    window.sessionStorage.removeItem(PENDING_INVITE_KEY);
+    return;
+  }
+  window.sessionStorage.setItem(PENDING_INVITE_KEY, token);
+}
+
+export function getPendingInviteToken() {
+  return window.sessionStorage.getItem(PENDING_INVITE_KEY);
 }

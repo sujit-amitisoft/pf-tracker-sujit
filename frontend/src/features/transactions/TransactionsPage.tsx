@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -6,9 +6,10 @@ import { api } from "../../services/api";
 import { showAppToast } from "../../services/toast";
 import { AppDateField, AppSelect } from "../../components/FormControls";
 
-type Transaction = { id: string; merchant: string; category: string; account: string; type: "INCOME" | "EXPENSE"; amount: string; date: string; note: string };
+type Transaction = { id: string; merchant: string; category: string; account: string; type: "INCOME" | "EXPENSE"; amount: string; date: string; note: string; tags: string[] };
 type Account = { id: string; name: string };
 type Category = { id: string; name: string; type: "INCOME" | "EXPENSE" };
+type TransactionForm = { type: "EXPENSE" | "INCOME"; amount: string; date: string; merchant: string; note: string; accountId: string; categoryId: string; tags: string[] };
 
 export function TransactionsPage() {
   const [searchParams] = useSearchParams();
@@ -16,21 +17,22 @@ export function TransactionsPage() {
   const [filters, setFilters] = useState({ type: "ALL", account: "ALL", category: "ALL", date: "", search: initialSearch });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [form, setForm] = useState({ type: "EXPENSE", amount: "", date: "", merchant: "", note: "", accountId: "", categoryId: "" });
+  const [importOpen, setImportOpen] = useState(false);
+  const [importPayload, setImportPayload] = useState("[\n  {\n    \"type\": \"EXPENSE\",\n    \"amount\": 45.5,\n    \"date\": \"2026-03-23\",\n    \"merchant\": \"Grocer\",\n    \"accountId\": \"\",\n    \"categoryId\": \"\",\n    \"note\": \"Imported sample\",\n    \"paymentMethod\": \"import\",\n    \"tags\": []\n  }\n]");
+  const [form, setForm] = useState<TransactionForm>({ type: "EXPENSE", amount: "", date: "", merchant: "", note: "", accountId: "", categoryId: "", tags: [] });
   const [formError, setFormError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const transactions = useQuery({ queryKey: ["transactions"], queryFn: async () => (await api.get<Transaction[]>("/api/transactions")).data });
   const accounts = useQuery({ queryKey: ["accounts"], queryFn: async () => (await api.get<Account[]>("/api/accounts")).data });
   const categories = useQuery({ queryKey: ["categories"], queryFn: async () => (await api.get<Category[]>("/api/categories")).data });
 
-
   const filteredCategories = (categories.data ?? []).filter((item) => item.type === form.type);
+  const isTableLoading = transactions.isLoading || accounts.isLoading || categories.isLoading;
 
   const filtered = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
     return (transactions.data ?? []).filter((item) => {
-      const searchPass = !normalizedSearch || [item.id, item.merchant, item.category, item.account, item.note, item.type].some((value) => value?.toLowerCase().includes(normalizedSearch));
+      const searchPass = !normalizedSearch || [item.id, item.merchant, item.category, item.account, item.note, item.type, ...(item.tags ?? [])].some((value) => value?.toLowerCase().includes(normalizedSearch));
       const typePass = filters.type === "ALL" || item.type === filters.type;
       const accountPass = filters.account === "ALL" || item.account === filters.account;
       const categoryPass = filters.category === "ALL" || item.category === filters.category;
@@ -38,6 +40,14 @@ export function TransactionsPage() {
       return searchPass && typePass && accountPass && categoryPass && datePass;
     });
   }, [filters, transactions.data]);
+
+  const invalidateData = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    await queryClient.invalidateQueries({ queryKey: ["insights"] });
+    await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  };
 
   const startEdit = (item: Transaction) => {
     setEditingId(item.id);
@@ -50,6 +60,7 @@ export function TransactionsPage() {
       note: item.note ?? "",
       accountId: (accounts.data ?? []).find((entry) => entry.name === item.account)?.id ?? "",
       categoryId: (categories.data ?? []).find((entry) => entry.name === item.category)?.id ?? "",
+      tags: item.tags ?? [],
     });
   };
 
@@ -68,14 +79,17 @@ export function TransactionsPage() {
       accountId: form.accountId,
       categoryId: form.categoryId,
       paymentMethod: "manual",
-      tags: [],
+      tags: form.tags,
     });
     setEditingId(null);
     setFormError(null);
     showAppToast("Transaction updated");
-    await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    await invalidateData();
+  };
+
+  const extractAlertText = (note: string) => {
+    const matches = [...(note ?? "").matchAll(/\[Alert:\s*([^\]]+)\]/gi)];
+    return matches.map((match) => match[1].trim()).filter(Boolean);
   };
 
   const confirmDeleteTransaction = async () => {
@@ -83,9 +97,20 @@ export function TransactionsPage() {
     await api.delete(`/api/transactions/${deleteConfirmId}`);
     setDeleteConfirmId(null);
     showAppToast("Transaction deleted");
-    await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    await invalidateData();
+  };
+
+  const importTransactions = async () => {
+    try {
+      const parsed = JSON.parse(importPayload);
+      const rows = Array.isArray(parsed) ? parsed : parsed.transactions;
+      await api.post("/api/transactions/import", { transactions: rows });
+      setImportOpen(false);
+      showAppToast("Transactions imported and rules applied");
+      await invalidateData();
+    } catch (err: any) {
+      setFormError(err?.response?.data?.details?.[0] ?? err?.response?.data?.message ?? "Invalid import payload");
+    }
   };
 
   const typeOptions = [
@@ -115,9 +140,12 @@ export function TransactionsPage() {
           <div className="panel-head transactions-head">
             <div>
               <h2>Money History</h2>
-              <p>Transactions list with date, type, category, account, and search filters.</p>
+              <p>Transactions list with date, type, category, account, search filters, and import support.</p>
             </div>
-            <button className="button primary transactions-add-button" type="button" onClick={() => window.dispatchEvent(new Event("open-add-transaction"))}>Add Transaction</button>
+            <div className="reports-export-actions compact-inline-actions">
+              <button className="button ghost" type="button" onClick={() => setImportOpen(true)}>Import</button>
+              <button className="button primary transactions-add-button" type="button" onClick={() => window.dispatchEvent(new Event("open-add-transaction"))}>Add Transaction</button>
+            </div>
           </div>
 
           <div className="filters-bar structured-filters-bar transactions-filters">
@@ -140,10 +168,23 @@ export function TransactionsPage() {
             <span className="actions-header">Actions</span>
           </div>
           <div className="transactions-table-body transactions-table-scrollable">
-            {filtered.length ? filtered.map((item) => (
+            {isTableLoading ? (
+              <div className="transactions-table-loading" role="status" aria-live="polite">
+                <span className="table-spinner" />
+                <strong>Loading transactions...</strong>
+              </div>
+            ) : filtered.length ? filtered.map((item) => (
               <div key={item.id} className="table-row table-row-transactions transaction-data-row">
                 <span>{item.date}</span>
-                <span>{item.merchant}</span>
+                <span className="transaction-merchant-cell">
+                  <strong>{item.merchant}</strong>
+                  {item.tags?.length || item.note ? (
+                    <span className="transaction-meta-stack">
+                      {item.tags?.length ? <span className="transaction-meta-chip">Tags: {item.tags.join(", ")}</span> : null}
+                      {extractAlertText(item.note ?? "").map((alert) => <span key={`${item.id}-${alert}`} className="transaction-meta-chip alert">Alert: {alert}</span>)}
+                    </span>
+                  ) : null}
+                </span>
                 <span>{item.category}</span>
                 <span>{item.account}</span>
                 <span><span className={`badge ${item.type === "INCOME" ? "success" : "neutral"}`}>{item.type}</span></span>
@@ -187,6 +228,29 @@ export function TransactionsPage() {
         document.body,
       ) : null}
 
+      {importOpen ? createPortal(
+        <div className="modal-backdrop transaction-modal-backdrop" onClick={() => setImportOpen(false)}>
+          <div className="modal-card modal-card-structured solid-modal-card transaction-dialog-card transaction-form-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="panel-head overlay-head">
+              <div>
+                <h2>Import Transactions</h2>
+                <p>Paste a JSON array of transactions. Import runs the rules engine automatically.</p>
+              </div>
+              <button className="icon-button quiet close-icon-button" type="button" onClick={() => setImportOpen(false)} aria-label="Close import modal" />
+            </div>
+            <div className="form-grid app-form-grid">
+              <textarea className="wide-input reports-json-import" rows={12} value={importPayload} onChange={(event) => setImportPayload(event.target.value)} />
+              {formError ? <p className="form-error">{formError}</p> : null}
+              <div className="modal-actions edit-modal-actions">
+                <button className="edit-modal-secondary" type="button" onClick={() => setImportOpen(false)}>Cancel</button>
+                <button className="edit-modal-primary" type="button" onClick={importTransactions}>Import and Apply Rules</button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      ) : null}
+
       {deleteConfirmId ? createPortal(
         <div className="modal-backdrop transaction-modal-backdrop" onClick={() => setDeleteConfirmId(null)}>
           <div className="modal-card modal-card-structured solid-modal-card transaction-dialog-card transaction-confirm-modal" onClick={(event) => event.stopPropagation()}>
@@ -209,18 +273,6 @@ export function TransactionsPage() {
         </div>,
         document.body,
       ) : null}
-
-      {toastMessage ? <div className="toast">{toastMessage}</div> : null}
     </>
   );
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,7 +1,9 @@
 package com.amiti.financetracker.transactions.dto;
 
 import com.amiti.financetracker.domain.model.TransactionType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,7 +22,8 @@ public class TransactionDtos {
             TransactionType type,
             BigDecimal amount,
             LocalDate date,
-            String note
+            String note,
+            List<String> tags
     ) {
     }
 
@@ -34,6 +37,11 @@ public class TransactionDtos {
             String note,
             String paymentMethod,
             List<String> tags
+    ) {
+    }
+
+    public record TransactionImportRequest(
+            @NotEmpty List<@Valid TransactionRequest> transactions
     ) {
     }
 }

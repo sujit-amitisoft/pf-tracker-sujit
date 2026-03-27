@@ -15,17 +15,21 @@ public class BudgetDtos {
             UUID id,
             UUID categoryId,
             String category,
+            UUID accountId,
+            String account,
             int month,
             int year,
             BigDecimal amount,
             int alertThresholdPercent,
             BigDecimal actualSpend,
-            int percentUsed
+            int percentUsed,
+            boolean shared
     ) {
     }
 
     public record BudgetRequest(
             @NotNull UUID categoryId,
+            UUID accountId,
             @Min(1) @Max(12) int month,
             @Min(2024) int year,
             @DecimalMin("0.01") BigDecimal amount,
