@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../services/api";
+import { handlePermissionDenied } from "../../services/apiErrors";
 import { AppDateField, AppSelect } from "../../components/FormControls";
 
 type Recurring = {
@@ -81,38 +82,47 @@ export function RecurringPage() {
       return;
     }
 
-    await api.post("/api/recurring", {
-      title: form.title.trim(),
-      type: "EXPENSE",
-      amount: Number(form.amount),
-      categoryId: form.categoryId,
-      accountId: form.accountId,
-      frequency: form.frequency,
-      startDate: form.startDate,
-      endDate: null,
-      autoCreateTransaction: true,
-    });
+    try {
+      await api.post("/api/recurring", {
+        title: form.title.trim(),
+        type: "EXPENSE",
+        amount: Number(form.amount),
+        categoryId: form.categoryId,
+        accountId: form.accountId,
+        frequency: form.frequency,
+        startDate: form.startDate,
+        endDate: null,
+        autoCreateTransaction: true,
+      });
 
-    setForm(createInitialForm());
-    setError(null);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["recurring"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "upcoming"] }),
-      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-    ]);
+      setForm(createInitialForm());
+      setError(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["recurring"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard", "upcoming"] }),
+        queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+      ]);
+    } catch (err: any) {
+      handlePermissionDenied(err, setError, "Failed to create recurring item");
+    }
   };
 
   const confirmDeleteRecurring = async () => {
     if (!deleteConfirmRecurringId) return;
-    await api.delete(`/api/recurring/${deleteConfirmRecurringId}`);
-    setDeleteConfirmRecurringId(null);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["recurring"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "upcoming"] }),
-      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-    ]);
+    try {
+      await api.delete(`/api/recurring/${deleteConfirmRecurringId}`);
+      setDeleteConfirmRecurringId(null);
+      setError(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["recurring"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard", "upcoming"] }),
+        queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+      ]);
+    } catch (err: any) {
+      handlePermissionDenied(err, setError, "Failed to delete recurring item");
+    }
   };
 
   const deleteTarget = (recurring.data ?? []).find((item) => item.id === deleteConfirmRecurringId) ?? null;
@@ -164,7 +174,7 @@ export function RecurringPage() {
                 <span>{item.nextRunDate}</span>
                 <strong className="transaction-amount expense">-${item.amount}</strong>
                 <div className="goals-row-trash-wrap recurring-row-trash-wrap">
-                  <button className="goal-trash-button" type="button" onClick={() => setDeleteConfirmRecurringId(item.id)} aria-label={`Delete ${item.title}`}>
+                  <button className="goal-trash-button" type="button" onClick={() => { setError(null); setDeleteConfirmRecurringId(item.id); }} aria-label={`Delete ${item.title}`}>
                     <span className="goal-trash-icon" aria-hidden="true" />
                   </button>
                 </div>
@@ -188,6 +198,7 @@ export function RecurringPage() {
               <strong>{deleteTarget?.title ?? "Recurring item"}</strong>
               <p>{deleteTarget ? `${deleteTarget.amount} / ${deleteTarget.frequency} - Due: ${deleteTarget.nextRunDate}` : "This action cannot be undone."}</p>
             </div>
+            {error ? <p className="form-error delete-modal-error">{error}</p> : null}
             <div className="modal-actions delete-modal-actions">
               <button className="button ghost" type="button" onClick={() => setDeleteConfirmRecurringId(null)}>Cancel</button>
               <button className="button primary delete-confirm-button" type="button" onClick={confirmDeleteRecurring}>Delete</button>
@@ -199,5 +210,3 @@ export function RecurringPage() {
     </>
   );
 }
-
-

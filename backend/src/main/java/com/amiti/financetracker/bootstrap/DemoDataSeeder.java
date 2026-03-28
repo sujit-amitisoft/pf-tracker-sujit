@@ -1,21 +1,26 @@
 package com.amiti.financetracker.bootstrap;
 
 import com.amiti.financetracker.domain.entity.AccountEntity;
+import com.amiti.financetracker.domain.entity.AccountMemberEntity;
 import com.amiti.financetracker.domain.entity.BudgetEntity;
 import com.amiti.financetracker.domain.entity.CategoryEntity;
 import com.amiti.financetracker.domain.entity.GoalEntity;
 import com.amiti.financetracker.domain.entity.RecurringTransactionEntity;
+import com.amiti.financetracker.domain.entity.SharedAccountInviteEntity;
 import com.amiti.financetracker.domain.entity.TransactionEntity;
 import com.amiti.financetracker.domain.entity.UserEntity;
+import com.amiti.financetracker.domain.repository.AccountMemberRepository;
 import com.amiti.financetracker.domain.repository.AccountRepository;
 import com.amiti.financetracker.domain.repository.BudgetRepository;
 import com.amiti.financetracker.domain.repository.CategoryRepository;
 import com.amiti.financetracker.domain.repository.GoalRepository;
 import com.amiti.financetracker.domain.repository.RecurringTransactionRepository;
+import com.amiti.financetracker.domain.repository.SharedAccountInviteRepository;
 import com.amiti.financetracker.domain.repository.TransactionRepository;
 import com.amiti.financetracker.domain.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -32,20 +37,30 @@ public class DemoDataSeeder {
     CommandLineRunner seedDemoData(
             UserRepository userRepository,
             AccountRepository accountRepository,
+            AccountMemberRepository accountMemberRepository,
             CategoryRepository categoryRepository,
             TransactionRepository transactionRepository,
             BudgetRepository budgetRepository,
             GoalRepository goalRepository,
             RecurringTransactionRepository recurringTransactionRepository,
+            SharedAccountInviteRepository sharedAccountInviteRepository,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
-            String email = "admin@amiti.local";
-            UserEntity user = userRepository.findByEmailIgnoreCase(email).orElseGet(UserEntity::new);
-            user.setEmail(email);
-            user.setDisplayName("Admin User");
-            user.setPasswordHash(passwordEncoder.encode("Password1"));
-            user = userRepository.save(user);
+            UserEntity user = upsertDemoUser(
+                    userRepository,
+                    passwordEncoder,
+                    "admin@amiti.local",
+                    "Admin User",
+                    "Password1"
+            );
+            UserEntity viewerUser = upsertDemoUser(
+                    userRepository,
+                    passwordEncoder,
+                    "viewer@amiti.local",
+                    "Viewer Demo",
+                    "Password1"
+            );
 
             UUID userId = user.getId();
             AccountEntity bank = findOrCreateAccount(accountRepository, userId, "Primary Bank", () -> {
@@ -131,7 +146,32 @@ public class DemoDataSeeder {
                 salary.setPaused(false);
                 recurringTransactionRepository.save(salary);
             }
+
+            removeAccountMember(accountMemberRepository, bank.getId(), viewerUser.getId());
+            removeAccountMember(accountMemberRepository, card.getId(), viewerUser.getId());
+            seedSharedInvite(
+                    sharedAccountInviteRepository,
+                    bank.getId(),
+                    "viewer@amiti.local",
+                    "VIEWER",
+                    "demo-shared-invite-token",
+                    userId
+            );
         };
+    }
+
+    private UserEntity upsertDemoUser(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            String email,
+            String displayName,
+            String password
+    ) {
+        UserEntity user = userRepository.findByEmailIgnoreCase(email).orElseGet(UserEntity::new);
+        user.setEmail(email);
+        user.setDisplayName(displayName);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        return userRepository.save(user);
     }
 
     private AccountEntity findOrCreateAccount(AccountRepository repository, UUID userId, String name, Supplier<AccountEntity> supplier) {
@@ -176,6 +216,29 @@ public class DemoDataSeeder {
         entity.setYear(year);
         entity.setAmount(amount);
         entity.setAlertThresholdPercent(80);
+        repository.save(entity);
+    }
+
+    private void removeAccountMember(AccountMemberRepository repository, UUID accountId, UUID userId) {
+        repository.findByAccountIdAndUserId(accountId, userId).ifPresent(repository::delete);
+    }
+
+    private void seedSharedInvite(
+            SharedAccountInviteRepository repository,
+            UUID accountId,
+            String email,
+            String role,
+            String token,
+            UUID invitedBy
+    ) {
+        SharedAccountInviteEntity entity = repository.findByToken(token).orElseGet(SharedAccountInviteEntity::new);
+        entity.setAccountId(accountId);
+        entity.setEmail(email);
+        entity.setRole(role);
+        entity.setToken(token);
+        entity.setInvitedBy(invitedBy);
+        entity.setExpiresAt(LocalDateTime.now().plusDays(14));
+        entity.setAcceptedAt(null);
         repository.save(entity);
     }
 }

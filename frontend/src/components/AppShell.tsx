@@ -2,6 +2,7 @@ import { startTransition, useEffect, useMemo, useRef, useState, type SVGProps } 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { api } from "../services/api";
+import { handlePermissionDenied, resolveApiError } from "../services/apiErrors";
 import { getPreferences, preferenceEventName, setPreferences, type Preferences } from "../services/preferences";
 import { clearSession, getSession } from "../services/session";
 import { appToastEventName, showAppToast, type AppToastDetail } from "../services/toast";
@@ -487,7 +488,7 @@ const handleSaveTransaction = async () => {
                           <button key={item.id} className="search-result" onClick={() => openSearchResult(item.merchant)}>
                             <div>
                               <strong>{item.merchant}</strong>
-                              <p>{item.category} � {item.account}</p>
+                              <p>{item.category} Â· {item.account}</p>
                             </div>
                             <span>${item.amount}</span>
                           </button>
@@ -570,7 +571,7 @@ const handleSaveTransaction = async () => {
               {notificationPopups.map((popup) => (
                 <div key={popup.id} className={`notification-popup ${popup.severity.toLowerCase()}`}>
                   <div>
-                    <strong>{popup.source}</strong>
+                    <strong>{popup.source.replace(/(^|\s)\S/g, (match) => match.toUpperCase())}</strong>
                     <p>{popup.message}</p>
                   </div>
                   <button className="icon-button quiet close-icon-button popup-close" type="button" onClick={() => setNotificationPopups((current) => current.filter((item) => item.id !== popup.id))} aria-label="Dismiss notification" />
@@ -697,6 +698,8 @@ const handleSaveTransaction = async () => {
     </div>
   );
 }
+
+
 
 
 

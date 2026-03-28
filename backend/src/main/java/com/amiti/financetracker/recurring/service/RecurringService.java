@@ -1,5 +1,7 @@
 package com.amiti.financetracker.recurring.service;
 
+import com.amiti.financetracker.accounts.service.SharedAccountService;
+import com.amiti.financetracker.common.BadRequestException;
 import com.amiti.financetracker.common.NotFoundException;
 import com.amiti.financetracker.domain.entity.RecurringTransactionEntity;
 import com.amiti.financetracker.domain.entity.TransactionEntity;
@@ -10,7 +12,10 @@ import com.amiti.financetracker.domain.repository.TransactionRepository;
 import com.amiti.financetracker.recurring.dto.RecurringDtos.RecurringRequest;
 import com.amiti.financetracker.recurring.dto.RecurringDtos.RecurringResponse;
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -22,21 +27,33 @@ public class RecurringService {
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final SharedAccountService sharedAccountService;
 
     public RecurringService(
             RecurringTransactionRepository recurringRepository,
             AccountRepository accountRepository,
             CategoryRepository categoryRepository,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            SharedAccountService sharedAccountService
     ) {
         this.recurringRepository = recurringRepository;
         this.accountRepository = accountRepository;
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
+        this.sharedAccountService = sharedAccountService;
     }
 
     public List<RecurringResponse> list(UUID userId) {
-        return recurringRepository.findByUserIdOrderByNextRunDateAsc(userId).stream().map(this::toResponse).toList();
+        Map<UUID, RecurringTransactionEntity> recurringItems = new LinkedHashMap<>();
+        recurringRepository.findByUserIdOrderByNextRunDateAsc(userId).forEach(item -> recurringItems.put(item.getId(), item));
+        var accessibleAccounts = sharedAccountService.accessibleAccountIds(userId);
+        if (!accessibleAccounts.isEmpty()) {
+            recurringRepository.findByAccountIdInOrderByNextRunDateAsc(accessibleAccounts).forEach(item -> recurringItems.put(item.getId(), item));
+        }
+        return recurringItems.values().stream()
+                .sorted(Comparator.comparing(RecurringTransactionEntity::getNextRunDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional
@@ -49,14 +66,16 @@ public class RecurringService {
 
     @Transactional
     public RecurringResponse update(UUID userId, UUID recurringId, RecurringRequest request) {
-        RecurringTransactionEntity entity = recurringRepository.findByIdAndUserId(recurringId, userId).orElseThrow(() -> new NotFoundException("Recurring item not found"));
+        RecurringTransactionEntity entity = recurringRepository.findById(recurringId).orElseThrow(() -> new NotFoundException("Recurring item not found"));
+        assertCanEdit(userId, entity);
         apply(entity, request, userId);
         return toResponse(recurringRepository.save(entity));
     }
 
     @Transactional
     public void delete(UUID userId, UUID recurringId) {
-        RecurringTransactionEntity entity = recurringRepository.findByIdAndUserId(recurringId, userId).orElseThrow(() -> new NotFoundException("Recurring item not found"));
+        RecurringTransactionEntity entity = recurringRepository.findById(recurringId).orElseThrow(() -> new NotFoundException("Recurring item not found"));
+        assertCanEdit(userId, entity);
         recurringRepository.delete(entity);
     }
 
@@ -81,6 +100,7 @@ public class RecurringService {
     }
 
     private void apply(RecurringTransactionEntity entity, RecurringRequest request, UUID userId) {
+        sharedAccountService.assertCanEdit(userId, request.accountId());
         entity.setTitle(request.title());
         entity.setType(request.type().name());
         entity.setAmount(request.amount());
@@ -92,6 +112,16 @@ public class RecurringService {
         entity.setPaused(false);
         entity.setAccountId(request.accountId());
         entity.setCategoryId(request.categoryId());
+    }
+
+    private void assertCanEdit(UUID userId, RecurringTransactionEntity entity) {
+        if (userId.equals(entity.getUserId())) {
+            return;
+        }
+        if (entity.getAccountId() != null && sharedAccountService.canEdit(userId, entity.getAccountId())) {
+            return;
+        }
+        throw new BadRequestException("You do not have permission to modify this account");
     }
 
     private LocalDate nextDate(RecurringTransactionEntity recurring) {

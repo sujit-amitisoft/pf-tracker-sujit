@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../services/api";
+import { handlePermissionDenied, isPermissionDeniedMessage, resolveApiError } from "../../services/apiErrors";
 import { AppSelect } from "../../components/FormControls";
 
 type Account = { id: string; name: string; type: string; currentBalance: string; institutionName: string; shared: boolean; accessRole: string; memberCount: number };
@@ -98,7 +99,12 @@ export function AccountsPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
       await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     } catch (err: any) {
-      setFormError(err?.response?.data?.details?.[0] ?? err?.response?.data?.message ?? "Failed to create account");
+      const message = resolveApiError(err, "Failed to create account");
+      if (isPermissionDeniedMessage(message)) {
+        handlePermissionDenied(err, setFormError, "Failed to create account");
+      } else {
+        setFormError(message);
+      }
     }
   };
 
@@ -149,7 +155,7 @@ export function AccountsPage() {
                 <h3>Activity</h3>
                 <div className="shared-members-list compact-shared-list account-activity-list">
                   {(activity.data ?? []).slice(0, 10).map((item) => (
-                    <article key={item.id} className="rule-card shared-member-card compact-member-card">
+                    <article key={item.id} className="rule-card shared-member-card compact-member-card account-activity-card">
                       <div className="rule-card-head"><strong>{item.actorName || item.actorEmail || "User"}</strong><span className="status-chip active">{item.activityType.replace(/_/g, " ")}</span></div>
                       <p>{item.summary}</p>
                       <span className="rule-meta">{new Date(item.createdAt).toLocaleString()}</span>
@@ -190,5 +196,4 @@ export function AccountsPage() {
     </>
   );
 }
-
 

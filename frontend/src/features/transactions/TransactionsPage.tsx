@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../../services/api";
+import { handlePermissionDenied } from "../../services/apiErrors";
 import { showAppToast } from "../../services/toast";
 import { AppDateField, AppSelect } from "../../components/FormControls";
 
@@ -70,21 +71,26 @@ export function TransactionsPage() {
       setFormError("Amount, account, and category are required.");
       return;
     }
-    await api.put(`/api/transactions/${editingId}`, {
-      type: form.type,
-      amount: Number(form.amount),
-      date: form.date,
-      merchant: form.merchant,
-      note: form.note,
-      accountId: form.accountId,
-      categoryId: form.categoryId,
-      paymentMethod: "manual",
-      tags: form.tags,
-    });
-    setEditingId(null);
-    setFormError(null);
-    showAppToast("Transaction updated");
-    await invalidateData();
+
+    try {
+      await api.put(`/api/transactions/${editingId}`, {
+        type: form.type,
+        amount: Number(form.amount),
+        date: form.date,
+        merchant: form.merchant,
+        note: form.note,
+        accountId: form.accountId,
+        categoryId: form.categoryId,
+        paymentMethod: "manual",
+        tags: form.tags,
+      });
+      setEditingId(null);
+      setFormError(null);
+      showAppToast("Transaction updated");
+      await invalidateData();
+    } catch (err: any) {
+      handlePermissionDenied(err, setFormError, "Failed to update transaction");
+    }
   };
 
   const extractAlertText = (note: string) => {
@@ -94,10 +100,14 @@ export function TransactionsPage() {
 
   const confirmDeleteTransaction = async () => {
     if (!deleteConfirmId) return;
-    await api.delete(`/api/transactions/${deleteConfirmId}`);
-    setDeleteConfirmId(null);
-    showAppToast("Transaction deleted");
-    await invalidateData();
+    try {
+      await api.delete(`/api/transactions/${deleteConfirmId}`);
+      setDeleteConfirmId(null);
+      showAppToast("Transaction deleted");
+      await invalidateData();
+    } catch (err: any) {
+      handlePermissionDenied(err, setFormError, "Failed to delete transaction");
+    }
   };
 
   const importTransactions = async () => {
@@ -106,10 +116,15 @@ export function TransactionsPage() {
       const rows = Array.isArray(parsed) ? parsed : parsed.transactions;
       await api.post("/api/transactions/import", { transactions: rows });
       setImportOpen(false);
+      setFormError(null);
       showAppToast("Transactions imported and rules applied");
       await invalidateData();
     } catch (err: any) {
-      setFormError(err?.response?.data?.details?.[0] ?? err?.response?.data?.message ?? "Invalid import payload");
+      if (err instanceof SyntaxError) {
+        setFormError("Invalid import payload");
+        return;
+      }
+      handlePermissionDenied(err, setFormError, "Failed to import transactions");
     }
   };
 
@@ -191,7 +206,7 @@ export function TransactionsPage() {
                 <strong className={`transaction-amount ${item.type === "INCOME" ? "income" : "expense"}`}>{item.type === "INCOME" ? "+" : "-"}${item.amount}</strong>
                 <div className="row-actions transactions-row-actions compact-row-actions compact-row-actions-inline">
                   <button className="button ghost small transaction-action-button edit-action-button" type="button" onClick={() => startEdit(item)}>Edit</button>
-                  <button className="button ghost small transaction-action-button danger-button delete-action-button" type="button" onClick={() => setDeleteConfirmId(item.id)}>Delete</button>
+                  <button className="button ghost small transaction-action-button danger-button delete-action-button" type="button" onClick={() => { setFormError(null); setDeleteConfirmId(item.id); }}>Delete</button>
                 </div>
               </div>
             )) : <div className="empty-state">No transactions matched this search and filter combination.</div>}
@@ -263,8 +278,9 @@ export function TransactionsPage() {
             </div>
             <div className="delete-confirm-copy">
               <strong>{deleteTarget?.merchant ?? "Transaction"}</strong>
-              <p>{deleteTarget ? `${deleteTarget.date} · ${deleteTarget.category} · ${deleteTarget.account}` : "This action cannot be undone."}</p>
+              <p>{deleteTarget ? `${deleteTarget.date} | ${deleteTarget.category} | ${deleteTarget.account}` : "This action cannot be undone."}</p>
             </div>
+            {formError ? <p className="form-error delete-modal-error">{formError}</p> : null}
             <div className="modal-actions delete-modal-actions">
               <button className="button ghost" type="button" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
               <button className="button primary delete-confirm-button" type="button" onClick={confirmDeleteTransaction}>Delete</button>

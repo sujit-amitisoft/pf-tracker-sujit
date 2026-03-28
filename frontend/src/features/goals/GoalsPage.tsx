@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../services/api";
+import { handlePermissionDenied } from "../../services/apiErrors";
 import { AppDateField, AppSelect } from "../../components/FormControls";
 import { useState } from "react";
 import { createPortal } from "react-dom";
@@ -35,15 +36,19 @@ export function GoalsPage() {
       icon: "target",
       color: "teal",
     };
-    if (form.id) {
-      await api.put(`/api/goals/${form.id}`, payload);
-    } else {
-      await api.post("/api/goals", payload);
+    try {
+      if (form.id) {
+        await api.put(`/api/goals/${form.id}`, payload);
+      } else {
+        await api.post("/api/goals", payload);
+      }
+      setForm(createInitialGoalForm());
+      await queryClient.invalidateQueries({ queryKey: ["goals"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (err: any) {
+      handlePermissionDenied(err, setError, form.id ? "Failed to update goal" : "Failed to create goal");
     }
-    setForm(createInitialGoalForm());
-    await queryClient.invalidateQueries({ queryKey: ["goals"] });
-    await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    await queryClient.invalidateQueries({ queryKey: ["notifications"] });
   };
 
   const editGoal = (item: Goal) => {
@@ -59,12 +64,16 @@ export function GoalsPage() {
 
   const confirmDeleteGoal = async () => {
     if (!deleteConfirmGoalId) return;
-    await api.delete(`/api/goals/${deleteConfirmGoalId}`);
-    setDeleteConfirmGoalId(null);
-    if (form.id === deleteConfirmGoalId) setForm(createInitialGoalForm());
-    await queryClient.invalidateQueries({ queryKey: ["goals"] });
-    await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    try {
+      await api.delete(`/api/goals/${deleteConfirmGoalId}`);
+      setDeleteConfirmGoalId(null);
+      if (form.id === deleteConfirmGoalId) setForm(createInitialGoalForm());
+      await queryClient.invalidateQueries({ queryKey: ["goals"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (err: any) {
+      handlePermissionDenied(err, setError, "Failed to delete goal");
+    }
   };
 
   const accountOptions = [
@@ -72,13 +81,18 @@ export function GoalsPage() {
     ...((accounts.data ?? []).map((item) => ({ value: item.id, label: `${item.name} (${item.accessRole})` }))),
   ];
 
+  const updateForm = <K extends keyof GoalForm>(key: K, value: GoalForm[K]) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setError(null);
+  };
+
   const handleTargetAmountChange = (value: string) => {
     const numericValue = value.replace(/[^\d.]/g, "");
     const normalizedValue = numericValue
       .replace(/(\..*)\./g, "$1")
       .replace(/^(\d*\.\d{0,2}).*$/, "$1");
 
-    setForm({ ...form, targetAmount: normalizedValue });
+    updateForm("targetAmount", normalizedValue);
   };
 
   const deleteTarget = (goals.data ?? []).find((item) => item.id === deleteConfirmGoalId) ?? null;
@@ -94,10 +108,10 @@ export function GoalsPage() {
             </div>
           </div>
           <div className="form-grid compact-form-grid panel-enter app-form-strip goals-form-strip goals-form-row">
-            <input placeholder="Goal name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input placeholder="Goal name" value={form.name} onChange={(e) => updateForm("name", e.target.value)} />
             <input placeholder="Target amount" inputMode="decimal" value={form.targetAmount} onChange={(e) => handleTargetAmountChange(e.target.value)} />
-            <AppDateField value={form.targetDate} onChange={(e) => setForm({ ...form, targetDate: e.target.value })} />
-            <AppSelect value={form.linkedAccountId} onChange={(value) => setForm({ ...form, linkedAccountId: value })} options={accountOptions} placeholder="Optional linked account" className="goals-linked-account-select" />
+            <AppDateField value={form.targetDate} onChange={(e) => updateForm("targetDate", e.target.value)} />
+            <AppSelect value={form.linkedAccountId} onChange={(value) => updateForm("linkedAccountId", value)} options={accountOptions} placeholder="Optional linked account" className="goals-linked-account-select" />
             <button className="button primary budgets-action-button goals-inline-action" onClick={saveGoal}>{form.id ? "Update Goal" : "Create Goal"}</button>
           </div>
           {error ? <p className="form-error budget-form-error">{error}</p> : null}
@@ -127,7 +141,7 @@ export function GoalsPage() {
                 <span><span className={`status-chip ${item.shared ? "paused" : "active"}`}>{item.status}</span></span>
                 <div className="row-actions transactions-row-actions compact-row-actions compact-row-actions-inline">
                   <button className="button ghost small transaction-action-button edit-action-button" type="button" onClick={() => editGoal(item)}>Edit</button>
-                  <button className="button ghost small transaction-action-button danger-button delete-action-button" type="button" onClick={() => setDeleteConfirmGoalId(item.id)}>Delete</button>
+                  <button className="button ghost small transaction-action-button danger-button delete-action-button" type="button" onClick={() => { setError(null); setDeleteConfirmGoalId(item.id); }}>Delete</button>
                 </div>
               </div>
             )) : <div className="empty-state">No goals created yet.</div>}
@@ -149,6 +163,7 @@ export function GoalsPage() {
               <strong>{deleteTarget?.name ?? "Goal"}</strong>
               <p>{deleteTarget ? `${deleteTarget.currentAmount} / ${deleteTarget.targetAmount} - ${deleteTarget.linkedAccountName ?? "No linked account"}` : "This action cannot be undone."}</p>
             </div>
+            {error ? <p className="form-error delete-modal-error">{error}</p> : null}
             <div className="modal-actions delete-modal-actions">
               <button className="button ghost" type="button" onClick={() => setDeleteConfirmGoalId(null)}>Cancel</button>
               <button className="button primary delete-confirm-button" type="button" onClick={confirmDeleteGoal}>Delete</button>
@@ -160,3 +175,4 @@ export function GoalsPage() {
     </>
   );
 }
+

@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { api } from "../../services/api";
 import { AppSelect } from "../../components/FormControls";
 import { getPendingInviteToken, setPendingInviteToken } from "../../services/session";
+import { handlePermissionDenied, resolveApiError } from "../../services/apiErrors";
 import { showAppToast } from "../../services/toast";
 
 type Account = { id: string; name: string; type: string; currentBalance: string; institutionName: string; shared: boolean; accessRole: string };
@@ -63,7 +64,7 @@ export function SharedAccountsPage() {
       showAppToast(data.message);
       await queryClient.invalidateQueries({ queryKey: ["accounts", "invites", selectedAccount.id] });
     } catch (err: any) {
-      setError(err?.response?.data?.details?.[0] ?? err?.response?.data?.message ?? "Failed to invite member");
+      handlePermissionDenied(err, setError, "Failed to invite member");
     }
   };
 
@@ -76,27 +77,45 @@ export function SharedAccountsPage() {
       setSearchParams({});
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? "Failed to accept invitation");
+      const message = resolveApiError(err, "Failed to accept invitation");
+      setError(message);
+      showAppToast(message);
     }
   };
 
   const updateRole = async (member: Member, role: "EDITOR" | "VIEWER") => {
     if (!selectedAccount) return;
-    await api.put(`/api/accounts/${selectedAccount.id}/members/${member.userId}`, { role });
-    await queryClient.invalidateQueries({ queryKey: ["accounts", "members", selectedAccount.id] });
+    try {
+      await api.put(`/api/accounts/${selectedAccount.id}/members/${member.userId}`, { role });
+      setError(null);
+      showAppToast(`Updated ${member.displayName || member.email} to ${role}`);
+      await queryClient.invalidateQueries({ queryKey: ["accounts", "members", selectedAccount.id] });
+    } catch (err: any) {
+      handlePermissionDenied(err, setError, "Failed to update member role");
+    }
   };
 
   return (
     <div className="page-fit-layout shared-page-shell shared-page-layout">
       {inviteToken ? (
-        <section className="glass-panel nested-panel shared-summary-panel invite-preview-panel">
-          <div className="panel-head"><div><h2>Shared Account Invitation</h2><p>Review and accept your pending account invitation.</p></div></div>
+        <section className="glass-panel nested-panel shared-summary-panel invite-preview-panel invite-preview-shell">
+          <div className="panel-head invite-preview-head">
+            <div>
+              <h2>Shared Account Invitation</h2>
+              <p>Review and accept your pending account invitation.</p>
+            </div>
+          </div>
           {invitePreview.data ? (
-            <div className="top-categories-card compact-info-card">
-              <strong>{invitePreview.data.accountName}</strong>
-              <p>Invited as {invitePreview.data.role} by {invitePreview.data.ownerName}</p>
-              <p>{invitePreview.data.invitedEmail} · Expires {new Date(invitePreview.data.expiresAt).toLocaleString()}</p>
-              <div className="modal-actions compact-actions"><button className="button primary" type="button" onClick={acceptInvite}>Accept Invitation</button></div>
+            <div className="top-categories-card compact-info-card invite-preview-card invite-highlight-card">
+              <div className="invite-preview-copy">
+                <span className="invite-preview-kicker">Invitation pending</span>
+                <strong>{invitePreview.data.accountName}</strong>
+                <p className="invite-preview-role">Invited as {invitePreview.data.role} by {invitePreview.data.ownerName}</p>
+                <p className="invite-preview-meta">{invitePreview.data.invitedEmail} | Expires {new Date(invitePreview.data.expiresAt).toLocaleString()}</p>
+              </div>
+              <div className="modal-actions compact-actions invite-preview-actions">
+                <button className="button primary invite-preview-button" type="button" onClick={acceptInvite}>Accept Invitation</button>
+              </div>
             </div>
           ) : invitePreview.isError ? <div className="empty-state">This invitation is invalid or expired.</div> : <div className="empty-state">Loading invitation...</div>}
         </section>
@@ -140,7 +159,7 @@ export function SharedAccountsPage() {
             <div className="top-categories-card compact-info-card">
               <strong>Pending Invites</strong>
               {(pendingInvites.data ?? []).map((invite) => (
-                <p key={invite.id}>{invite.email} · {invite.role} · expires {new Date(invite.expiresAt).toLocaleDateString()}</p>
+                <p key={invite.id}>{invite.email} | {invite.role} | expires {new Date(invite.expiresAt).toLocaleDateString()}</p>
               ))}
             </div>
           ) : null}
@@ -150,9 +169,23 @@ export function SharedAccountsPage() {
                 <div className="rule-card-head"><strong>{member.displayName || member.email}</strong><span className={`status-chip ${member.owner ? "active" : "paused"}`}>{member.role}</span></div>
                 <p>{member.email}</p>
                 {!member.owner && selectedAccount?.accessRole === "OWNER" ? (
-                  <div className="modal-actions compact-actions">
-                    <button className="button ghost" type="button" onClick={() => updateRole(member, "EDITOR")}>Editor</button>
-                    <button className="button ghost" type="button" onClick={() => updateRole(member, "VIEWER")}>Viewer</button>
+                  <div className="modal-actions compact-actions member-role-actions">
+                    <button
+                      className={`button member-role-button ${member.role === "EDITOR" ? "member-role-button-active" : "member-role-button-inactive"}`}
+                      type="button"
+                      onClick={() => updateRole(member, "EDITOR")}
+                      disabled={member.role === "EDITOR"}
+                    >
+                      Editor
+                    </button>
+                    <button
+                      className={`button member-role-button ${member.role === "VIEWER" ? "member-role-button-active" : "member-role-button-inactive"}`}
+                      type="button"
+                      onClick={() => updateRole(member, "VIEWER")}
+                      disabled={member.role === "VIEWER"}
+                    >
+                      Viewer
+                    </button>
                   </div>
                 ) : null}
               </article>
@@ -163,5 +196,3 @@ export function SharedAccountsPage() {
     </div>
   );
 }
-
-
